@@ -1,0 +1,8 @@
+{
+  "appId": "com.mrgamerdu84.tikowikobakery",
+  "appName": "TikoWiko Bakery",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
