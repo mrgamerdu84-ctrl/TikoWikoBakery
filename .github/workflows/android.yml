@@ -19,7 +19,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -39,6 +38,9 @@ jobs:
             npx cap add android
           fi
           npx cap sync android
+
+      - name: Generate Android icon and splash screen
+        run: npm run android:assets
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
