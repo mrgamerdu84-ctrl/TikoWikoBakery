@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TikoWiko Bakery — Diorama 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --wood-dark:#5c3a21; --wood:#8a5a34; --gold:#f4b942; --gold-dark:#d99a1b;
+  --cream:#fff8ec; --ink:#4a3220; --red:#e63946;
+  --green:#8fd19e; --green-dark:#4caf6e;
+  --ui-bg:#fffaf2; --shadow:rgba(0,0,0,.35);
+  --slate-1:#3a4a5c; --slate-2:#28323e; --slate-3:#1c242d; --slate-line:#57708a;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0e0904;font-family:'Fredoka',sans-serif;}
+#canvas-wrap{position:absolute;inset:0;}
+canvas{display:block;}
+
+/* ===== TOPBAR ===== */
+#topbar{
+  position:absolute;top:0;left:0;right:0;z-index:40;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:8px 14px;
+  background:linear-gradient(180deg,rgba(122,74,38,.94),rgba(92,58,33,.94));
+  border-bottom:4px solid var(--gold-dark);
+  box-shadow:0 4px 14px rgba(0,0,0,.4);
+  backdrop-filter:blur(3px);
+}
+.logo-badge{display:flex;align-items:center;gap:8px;background:var(--cream);border-radius:16px;padding:4px 12px 4px 4px;box-shadow:inset 0 0 0 3px var(--gold);flex-shrink:0;}
+.logo-badge .emoji{font-size:22px;}
+.logo-badge .title{font-family:'Baloo 2',cursive;font-weight:800;color:var(--wood-dark);font-size:15px;line-height:1;}
+.logo-badge .title span{display:block;font-size:10px;font-weight:600;color:#c65d78;letter-spacing:.5px;}
+.stat-pill{display:flex;align-items:center;gap:6px;background:var(--cream);border-radius:20px;padding:6px 12px;font-weight:700;color:var(--ink);box-shadow:inset 0 -3px 0 rgba(0,0,0,.08),0 2px 4px var(--shadow);font-size:13.5px;white-space:nowrap;}
+.stat-pill.money{color:#2e7d32;}
+#xpwrap{display:flex;align-items:center;gap:8px;background:var(--cream);border-radius:20px;padding:6px 12px 6px 10px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.08),0 2px 4px var(--shadow);flex:1;min-width:130px;max-width:220px;}
+#xpwrap .lvl{background:var(--gold);color:#5c3a21;font-weight:800;font-size:12px;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 var(--gold-dark);flex-shrink:0;}
+.xp-track{flex:1;height:9px;background:#e6d4b8;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.25);}
+.xp-fill{height:100%;background:linear-gradient(90deg,#ffd166,#f4b942);border-radius:6px;transition:width .3s;}
+#clockpill{display:flex;flex-direction:column;align-items:center;background:var(--wood-dark);color:#fff2d8;border-radius:14px;padding:4px 12px;font-weight:700;font-size:11px;line-height:1.25;box-shadow:0 2px 4px var(--shadow);}
+#clockpill b{font-size:14px;font-family:'Baloo 2';}
+#soundBtn{background:var(--cream);border:none;border-radius:50%;width:34px;height:34px;font-size:15px;cursor:pointer;box-shadow:inset 0 -3px 0 rgba(0,0,0,.08),0 2px 4px var(--shadow);flex-shrink:0;}
+#soundBtn:active{transform:translateY(2px);}
+
+/* ===== OBJECTIF DU JOUR ===== */
+#goalbar{
+  position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:35;
+  background:linear-gradient(155deg,#6b4326,#4a2e18);border:1px solid rgba(212,175,90,.4);
+  border-radius:14px;padding:7px 16px;color:#fff3d9;font-size:12px;font-weight:600;
+  box-shadow:0 8px 18px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px;
+}
+#goalbar .goal-track{width:100px;height:7px;background:rgba(255,255,255,.15);border-radius:5px;overflow:hidden;}
+#goalbar .goal-fill{height:100%;background:linear-gradient(90deg,#8fd19e,#4caf6e);border-radius:5px;transition:width .3s;}
+
+/* ===== QUICKBAR ===== */
+#quickbar{
+  position:absolute;bottom:0;left:0;right:0;z-index:40;
+  display:flex;justify-content:center;gap:12px;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg,rgba(122,74,38,.94),rgba(92,58,33,.94));
+  border-top:4px solid var(--gold-dark);flex-wrap:wrap;
+  backdrop-filter:blur(3px);
+}
+.qbtn{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--cream);border:none;border-radius:16px;padding:8px 16px;cursor:pointer;font-family:'Fredoka';font-weight:700;color:var(--ink);box-shadow:0 4px 0 #d3b78c,0 6px 10px rgba(0,0,0,.25);transition:transform .08s,box-shadow .08s;font-size:12px;min-width:64px;}
+.qbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #d3b78c,0 2px 4px rgba(0,0,0,.2);}
+.qbtn .qicon{font-size:22px;}
+.qbtn.active{background:var(--gold);box-shadow:0 4px 0 var(--gold-dark),0 6px 10px rgba(0,0,0,.25);}
+
+/* ===== SIDE PANEL ===== */
+#panel-backdrop{position:absolute;inset:0;z-index:45;background:rgba(10,7,4,.45);opacity:0;pointer-events:none;transition:opacity .25s;}
+#panel-backdrop.show{opacity:1;pointer-events:auto;}
+#sidepanel{position:absolute;top:0;right:-380px;width:360px;height:100%;background:linear-gradient(180deg,var(--slate-1),var(--slate-3));box-shadow:-6px 0 24px rgba(0,0,0,.5);transition:right .28s cubic-bezier(.4,0,.2,1);z-index:50;display:flex;flex-direction:column;border-left:3px solid #14181e;}
+#sidepanel.open{right:0;}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:linear-gradient(180deg,#465a70,var(--slate-1));border-bottom:2px solid rgba(0,0,0,.35);}
+.panel-header h2{margin:0;font-family:'Baloo 2';font-size:19px;color:#fff;text-shadow:0 2px 2px rgba(0,0,0,.35);}
+.closebtn{background:var(--red);color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #a4222c;}
+.closebtn:active{transform:translateY(2px);box-shadow:0 1px 0 #a4222c;}
+.tabs{display:flex;gap:6px;padding:10px 12px 0;background:var(--slate-2);flex-wrap:wrap;}
+.tab{flex:1;min-width:70px;text-align:center;padding:8px 6px;border-radius:10px 10px 0 0;background:#20293380;color:#b9c7d6;font-weight:700;font-size:12px;cursor:pointer;border:2px solid transparent;border-bottom:none;}
+.tab.active{background:var(--slate-1);border-color:var(--slate-line);color:var(--gold);}
+.panel-body{flex:1;overflow-y:auto;padding:12px;background:var(--slate-2);}
+.shop-item{display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#3d4f63,#2c3948);border:1px solid rgba(255,255,255,.08);border-bottom:2px solid rgba(0,0,0,.4);border-radius:14px;padding:10px;margin-bottom:10px;box-shadow:0 4px 10px rgba(0,0,0,.35);}
+.shop-item .icon-box{width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:23px;background:linear-gradient(160deg,#ffd98a,var(--gold-dark));box-shadow:inset 0 3px 0 rgba(255,255,255,.55),inset 0 -6px 8px rgba(0,0,0,.3);border:1px solid rgba(0,0,0,.25);}
+.shop-item .info{flex:1;min-width:0;}
+.shop-item .info .name{font-weight:700;color:#fff;font-size:13px;}
+.shop-item .info .desc{font-size:10.5px;color:#a9b8c8;margin-top:1px;}
+.shop-item .info .sub{font-size:10.5px;color:var(--gold);margin-top:2px;font-weight:700;}
+.buybtn{background:linear-gradient(180deg,#a3e8b0,var(--green-dark));color:#153a20;border:none;border-radius:10px;padding:8px 10px;font-weight:800;cursor:pointer;font-size:11.5px;white-space:nowrap;box-shadow:0 3px 0 #2c6b3f;flex-shrink:0;}
+.buybtn:active{transform:translateY(2px);box-shadow:0 1px 0 #2c6b3f;}
+.buybtn:disabled{background:#5a6570;color:#8b97a3;box-shadow:0 3px 0 #40474f;cursor:not-allowed;}
+.buybtn.maxed{background:linear-gradient(180deg,#ffd98a,var(--gold));color:#5c3a21;box-shadow:0 3px 0 var(--gold-dark);}
+.section-title{font-family:'Baloo 2';font-weight:700;color:#cddaea;font-size:13px;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.5px;opacity:.85;}
+.section-title:first-child{margin-top:0;}
+.staffline{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;}
+.statchip{background:rgba(255,255,255,.08);border-radius:8px;padding:3px 7px;font-size:10px;color:#dce8f2;font-weight:700;}
+.emptystate{color:#8fa2b3;text-align:center;font-size:12px;padding:20px 8px;}
+#financeChart{width:100%;height:130px;display:block;background:rgba(0,0,0,.2);border-radius:10px;margin-bottom:12px;}
+.hist-row{display:flex;justify-content:space-between;font-size:11.5px;color:#cddaea;padding:5px 8px;border-bottom:1px solid rgba(255,255,255,.06);}
+.hist-row b{color:#fff;}
+.savebtn{width:100%;background:linear-gradient(180deg,#7fa8ff,#4a72d0);color:#fff;border:none;border-radius:10px;padding:9px;font-weight:800;cursor:pointer;font-size:12px;margin-top:6px;box-shadow:0 3px 0 #2f4e99;}
+.savebtn:active{transform:translateY(2px);box-shadow:0 1px 0 #2f4e99;}
+.savenote{font-size:10px;color:#8fa2b3;margin-top:8px;line-height:1.5;}
+
+/* ===== LOADING ===== */
+#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0e0904;color:#f0c98a;font-weight:600;font-size:14px;z-index:100;flex-direction:column;gap:10px;transition:opacity .4s;}
+#loading .spin{width:34px;height:34px;border-radius:50%;border:4px solid rgba(244,185,66,.25);border-top-color:#f4b942;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+#hint{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);z-index:35;background:rgba(20,14,8,.55);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:7px 14px;color:#f0e3cc;font-size:11px;font-weight:600;pointer-events:none;}
+
+#toast-layer{position:absolute;top:70px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;}
+.toast{background:#fff;border-radius:12px;padding:6px 14px;font-weight:700;font-size:13px;color:var(--wood-dark);box-shadow:0 4px 10px rgba(0,0,0,.25);opacity:0;transform:translateY(-10px);animation:toastin .25s forwards,toastout .3s forwards 2.2s;}
+@keyframes toastin{to{opacity:1;transform:translateY(0);}}
+@keyframes toastout{to{opacity:0;transform:translateY(-10px);}}
+
+/* ===== POPUP RECOMPENSE ===== */
+#rewardOverlay{position:absolute;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(10,7,4,.55);}
+#rewardOverlay.show{display:flex;}
+.reward-card{background:linear-gradient(155deg,#6b4326,#4a2e18);border:2px solid var(--gold);border-radius:22px;padding:26px 34px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.6);max-width:320px;position:relative;overflow:hidden;}
+.reward-card .emoji{font-size:44px;}
+.reward-card h3{font-family:'Baloo 2';color:#fff3d9;font-size:20px;margin:6px 0;}
+.reward-card p{color:#e8d3b5;font-size:13px;margin:0 0 14px;}
+.reward-card button{background:var(--gold);border:none;border-radius:12px;padding:9px 22px;font-weight:800;font-family:'Baloo 2';color:#4a2e10;cursor:pointer;box-shadow:0 4px 0 var(--gold-dark);}
+.confetti{position:absolute;top:-10px;font-size:16px;animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(220px) rotate(360deg);opacity:0;}}
+
+@media (max-width:640px){
+  #xpwrap{order:10;flex-basis:100%;max-width:none;}
+  #sidepanel{width:90%;right:-100%;}
+  #hint{display:none;}
+  #goalbar{max-width:90%;font-size:11px;}
+}
+</style>
+</head>
+<body>
+<div id="loading"><div class="spin"></div>Préparation du diorama…</div>
+<div id="canvas-wrap"></div>
+
+<div id="topbar">
+  <div class="logo-badge"><span class="emoji">🥐</span><div class="title">TikoWiko<span>BAKERY — DIORAMA 3D</span></div></div>
+  <div class="stat-pill money"><span>💰</span><span id="stat-money">250€</span></div>
+  <div class="stat-pill"><span>👩‍🍳</span><span id="stat-staff">0</span></div>
+  <div class="stat-pill"><span>🧑‍🤝‍🧑</span><span id="stat-clients">0</span></div>
+  <div id="xpwrap"><div class="lvl" id="stat-level">1</div><div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div></div>
+  <div id="clockpill"><span id="stat-day">Jour 1</span><b id="stat-time">08:00</b></div>
+  <button id="soundBtn" title="Activer/couper le son">🔊</button>
+</div>
+
+<div id="goalbar">
+  <span id="goal-desc">🎯 Objectif du jour…</span>
+  <div class="goal-track"><div class="goal-fill" id="goal-fill" style="width:0%"></div></div>
+  <span id="goal-count">0/0</span>
+</div>
+
+<div id="hint">🖱️ Glisse pour tourner · molette pour zoomer</div>
+<div id="toast-layer"></div>
+
+<div id="rewardOverlay">
+  <div class="reward-card">
+    <div class="emoji" id="reward-emoji">🏆</div>
+    <h3 id="reward-title">Bravo !</h3>
+    <p id="reward-text">Récompense débloquée.</p>
+    <button id="reward-close">Continuer</button>
+  </div>
+</div>
+
+<div id="quickbar">
+  <button class="qbtn" data-panel="shop"><span class="qicon">🛒</span>Boutique</button>
+  <button class="qbtn" data-panel="staff"><span class="qicon">👥</span>Équipe</button>
+  <button class="qbtn" data-panel="finance"><span class="qicon">📊</span>Finances</button>
+  <button class="qbtn" data-panel="decor"><span class="qicon">🎨</span>Décor</button>
+</div>
+
+<div id="panel-backdrop"></div>
+<div id="sidepanel">
+  <div class="panel-header"><h2 id="panel-title">Boutique</h2><button class="closebtn" id="panel-close">✕</button></div>
+  <div class="tabs" id="panel-tabs"></div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+/* ============================================================================================
+   TIKOWIKO BAKERY — DIORAMA 3D
+   Architecture du fichier (sections indépendantes, faciles à isoler) :
+   1. Textures procédurales      5. Boutique (achats + effets réels)
+   2. Scène / caméra / lumières  6. Finances (historique + mini graphique)
+   3. Décor statique (four, etc) 7. Sons (WebAudio, sans fichier externe)
+   4. Personnages + IA employés  8. Sauvegarde (mémoire + export/import JSON)
+   ============================================================================================ */
+
+
+/* ============================================================
+   1. TEXTURES PROCEDURALES (aucun asset externe requis)
+   ============================================================ */
+function noise(x,y){ const n=Math.sin(x*12.9898+y*78.233)*43758.5453; return n-Math.floor(n); }
+
+function makeBrickTexture(){
+  const w=512,h=512;
+  const c=document.createElement("canvas"); c.width=w;c.height=h;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#5a2c1a"; ctx.fillRect(0,0,w,h);
+  const brickW=66, brickH=30, mortar=6;
+  let row=0;
+  for(let y=-brickH; y<h+brickH; y+=brickH+mortar, row++){
+    const offset=(row%2===0)?0:-(brickW/2);
+    for(let x=offset; x<w+brickW; x+=brickW+mortar){
+      const rnd=noise(x*0.1,y*0.1);
+      const r=148+rnd*55, g=58+rnd*30, b=36+rnd*18;
+      ctx.fillStyle=`rgb(${r|0},${g|0},${b|0})`;
+      ctx.fillRect(x,y,brickW,brickH);
+      ctx.fillStyle="rgba(0,0,0,0.10)"; ctx.fillRect(x,y+brickH-4,brickW,4);
+      ctx.fillStyle="rgba(255,255,255,0.08)"; ctx.fillRect(x,y,brickW,3);
+    }
+  }
+  const tex=new THREE.CanvasTexture(c);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(2.4,1.6);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+function makeBrickBump(){
+  const w=512,h=512;
+  const c=document.createElement("canvas"); c.width=w;c.height=h;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#808080"; ctx.fillRect(0,0,w,h);
+  const brickW=66, brickH=30, mortar=6;
+  ctx.fillStyle="#404040";
+  for(let y=-brickH; y<h+brickH; y+=brickH+mortar) ctx.fillRect(0,y+brickH,w,mortar);
+  for(let x=0;x<w;x+=brickW+mortar) ctx.fillRect(x,0,mortar,h);
+  const tex=new THREE.CanvasTexture(c);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(2.4,1.6);
+  return tex;
+}
+function makeTerracottaTexture(){
+  const size=512, tiles=8;
+  const c=document.createElement("canvas"); c.width=c.height=size;
+  const ctx=c.getContext("2d");
+  const tile=size/tiles;
+  for(let y=0;y<tiles;y++){
+    for(let x=0;x<tiles;x++){
+      const rnd=noise(x,y);
+      const base=175+rnd*50;
+      const r=base+25,g=base-50,b=base-100;
+      ctx.fillStyle=`rgb(${r|0},${g|0},${b|0})`;
+      ctx.fillRect(x*tile,y*tile,tile,tile);
+      ctx.strokeStyle="rgba(50,20,8,0.45)"; ctx.lineWidth=4;
+      ctx.strokeRect(x*tile,y*tile,tile,tile);
+      if(rnd>0.78){
+        ctx.fillStyle="rgba(255,255,255,0.10)";
+        ctx.beginPath(); ctx.ellipse(x*tile+tile*0.3,y*tile+tile*0.6,tile*0.14,tile*0.08,0.4,0,Math.PI*2); ctx.fill();
+      }
+      ctx.strokeStyle="rgba(80,30,10,0.18)"; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(x*tile+tile/2,y*tile+tile/2,tile*0.28,0,Math.PI*2); ctx.stroke();
+    }
+  }
+  const tex=new THREE.CanvasTexture(c);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(3.4,2.6);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+function makeWoodTexture(hue){
+  const w=256,h=256;
+  const c=document.createElement("canvas"); c.width=w;c.height=h;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle=hue||"#8a5a34"; ctx.fillRect(0,0,w,h);
+  for(let i=0;i<26;i++){
+    const yy=(i/26)*h+Math.sin(i*3.1)*3;
+    ctx.strokeStyle=`rgba(50,28,12,${0.10+noise(i,3)*0.14})`;
+    ctx.lineWidth=1+noise(i,7)*2;
+    ctx.beginPath(); ctx.moveTo(0,yy);
+    ctx.bezierCurveTo(w*0.3,yy+7,w*0.6,yy-7,w,yy);
+    ctx.stroke();
+  }
+  for(let i=0;i<4;i++){
+    ctx.strokeStyle="rgba(30,15,5,0.12)"; ctx.lineWidth=1.2;
+    const xx=20+i*60+noise(i,9)*10;
+    ctx.beginPath(); ctx.ellipse(xx,60+i*40,10,26,0,0,Math.PI*2); ctx.stroke();
+  }
+  const tex=new THREE.CanvasTexture(c);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+function makeMetalTexture(){
+  const w=256,h=256;
+  const c=document.createElement("canvas"); c.width=w;c.height=h;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#aeb6bd"; ctx.fillRect(0,0,w,h);
+  for(let y=0;y<h;y+=2){
+    ctx.strokeStyle=`rgba(255,255,255,${0.03+noise(y,1)*0.05})`;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+  const tex=new THREE.CanvasTexture(c);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+function makeSignTexture(text,sub){
+  const w=512,h=200;
+  const c=document.createElement("canvas"); c.width=w;c.height=h;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#f3e6cc"; ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle="#5c3a21"; ctx.lineWidth=8; ctx.strokeRect(4,4,w-8,h-8);
+  ctx.fillStyle="#4a2e18"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font="italic 700 52px 'Playfair Display', serif";
+  ctx.fillText(text, w/2, h*0.42);
+  ctx.font="600 21px Fredoka, sans-serif"; ctx.fillStyle="#a9762f";
+  ctx.fillText(sub, w/2, h*0.72);
+  const tex=new THREE.CanvasTexture(c);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+function makeFabricTexture(color){
+  const w=64,h=64;
+  const c=document.createElement("canvas"); c.width=w;c.height=h;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle=color; ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle="rgba(0,0,0,0.06)"; ctx.lineWidth=1;
+  for(let i=0;i<w;i+=4){ ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,h);ctx.stroke(); }
+  for(let i=0;i<h;i+=4){ ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(w,i);ctx.stroke(); }
+  const tex=new THREE.CanvasTexture(c);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(4,4);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+function perturbGeometry(geo, amp, seed){
+  seed=seed||0;
+  const pos=geo.attributes.position; const v=new THREE.Vector3();
+  for(let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos,i);
+    const n=noise(v.x*9+seed, v.y*9+v.z*4);
+    const n2=noise(v.y*7+seed*2, v.z*11);
+    const dx=(n-0.5)*amp, dy=(n2-0.5)*amp, dz=(noise(v.z*8+seed,v.x*6)-0.5)*amp;
+    v.x+=dx; v.y+=dy; v.z+=dz;
+    pos.setXYZ(i,v.x,v.y,v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+function archShape(halfW, straightH, radius){
+  const s=new THREE.Shape();
+  s.moveTo(-halfW,0); s.lineTo(-halfW,straightH);
+  s.absarc(0,straightH,radius,Math.PI,0,true);
+  s.lineTo(halfW,0); s.lineTo(-halfW,0);
+  return s;
+}
+
+/* ============================================================
+   2. SCENE / RENDERER / CAMERA / LUMIERES
+   ============================================================ */
+const wrap = document.getElementById("canvas-wrap");
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x140d07);
+scene.fog = new THREE.Fog(0x140d07, 16, 30);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+wrap.appendChild(renderer.domElement);
+
+const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(9.8, 9.2, 10.8);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0,1.3,0);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 7; controls.maxDistance = 20;
+controls.maxPolarAngle = Math.PI*0.49; controls.minPolarAngle = Math.PI*0.18;
+controls.update();
+
+const hemi = new THREE.HemisphereLight(0xfff2da, 0x6b4226, 0.6);
+scene.add(hemi);
+const key = new THREE.DirectionalLight(0xfff0d8, 1.6);
+key.position.set(7,11,6); key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.left=-9; key.shadow.camera.right=9;
+key.shadow.camera.top=9; key.shadow.camera.bottom=-9;
+key.shadow.camera.near=1; key.shadow.camera.far=30;
+key.shadow.bias=-0.0018; key.shadow.radius=4;
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xbcd7ff, 0.3);
+fill.position.set(-6,5,-4); scene.add(fill);
+
+/* Eclairage dynamique : la lumiere se rechauffe/s'assombrit avec l'horloge du jeu */
+function updateDynamicLight(minutes){
+  const hour = minutes/60;
+  // 8h -> plein jour chaud, 20h -> lumiere du soir plus tamisee/orangee
+  const dayT = clamp01((hour-8)/12);
+  const warmth = 1 - Math.abs(dayT-0.5)*1.2; // pic de luminosite en milieu de journee
+  key.intensity = 1.2 + warmth*0.6;
+  hemi.intensity = 0.45 + warmth*0.25;
+  const eveningTint = new THREE.Color(0xfff0d8).lerp(new THREE.Color(0xffb37a), 1-clamp01(warmth));
+  key.color = eveningTint;
+}
+function clamp01(v){ return Math.max(0,Math.min(1,v)); }
+
+/* ============================================================
+   3. DECOR STATIQUE : sol, murs, four, petrisseur, comptoirs...
+   ============================================================ */
+const floorMat = new THREE.MeshStandardMaterial({map:makeTerracottaTexture(), roughness:0.82, metalness:0.02});
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(11,8.6), floorMat);
+floor.rotation.x=-Math.PI/2; floor.receiveShadow=true;
+scene.add(floor);
+
+const woodFloor = new THREE.Mesh(new THREE.PlaneGeometry(11,2.2), new THREE.MeshStandardMaterial({map:makeWoodTexture("#6b4326"), roughness:0.55}));
+woodFloor.rotation.x=-Math.PI/2; woodFloor.position.set(0,0.001,-3.2); woodFloor.receiveShadow=true;
+scene.add(woodFloor);
+
+const wallMat = new THREE.MeshStandardMaterial({color:0xf0e6d2, roughness:0.92});
+const backWall = new THREE.Mesh(new THREE.BoxGeometry(11,4.4,0.25), wallMat);
+backWall.position.set(0,2.2,-4.3); backWall.castShadow=true; backWall.receiveShadow=true;
+scene.add(backWall);
+const sideWall = new THREE.Mesh(new THREE.BoxGeometry(0.25,4.4,8.6), wallMat);
+sideWall.position.set(-5.5,2.2,0); sideWall.castShadow=true; sideWall.receiveShadow=true;
+scene.add(sideWall);
+
+const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.4,1.32), new THREE.MeshStandardMaterial({map:makeSignTexture("TikoWiko Bakery","GESTION DE BOULANGERIE"), roughness:0.7}));
+sign.position.set(0,3.15,-4.17);
+scene.add(sign);
+
+const shelfWood = makeWoodTexture("#7a4a26");
+function breadMat(){ return new THREE.MeshPhysicalMaterial({color:0xd99a4a, roughness:0.55, clearcoat:0.25, clearcoatRoughness:0.4}); }
+function crustDark(){ return new THREE.MeshPhysicalMaterial({color:0xb5732f, roughness:0.6, clearcoat:0.2}); }
+function makeWallShelf(x,y,z,w){
+  const g=new THREE.Group();
+  const plank=new THREE.Mesh(new THREE.BoxGeometry(w,0.08,0.5), new THREE.MeshStandardMaterial({map:shelfWood, roughness:0.6}));
+  plank.castShadow=true; plank.receiveShadow=true; g.add(plank);
+  const bracketMat=new THREE.MeshStandardMaterial({color:0x3a2517, roughness:0.7});
+  [-w/2+0.12, w/2-0.12].forEach(dx=>{
+    const br=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.16,0.4), bracketMat);
+    br.position.set(dx,-0.1,0.02); g.add(br);
+  });
+  for(let i=0;i<3;i++){
+    const loaf=new THREE.Mesh(new THREE.SphereGeometry(0.13,10,8), breadMat());
+    perturbGeometry(loaf.geometry,0.018,i*3+1);
+    loaf.scale.set(1,0.72,1);
+    loaf.position.set(-w/2+0.3+i*(w-0.6)/2,0.16,0);
+    loaf.castShadow=true; g.add(loaf);
+  }
+  g.position.set(x,y,z);
+  return g;
+}
+scene.add(makeWallShelf(2.6,2.5,-4.12,2.4));
+scene.add(makeWallShelf(2.6,1.7,-4.12,2.4));
+
+const brickTex = makeBrickTexture();
+const brickBump = makeBrickBump();
+const brickMat = new THREE.MeshStandardMaterial({map:brickTex, bumpMap:brickBump, bumpScale:0.03, roughness:0.85});
+
+/* Four a briques : reconstruit via une fonction reutilisable pour pouvoir
+   en acheter d'autres dans la boutique (voir section 5). */
+function buildOven(x,z){
+  const oven = new THREE.Group();
+  const ovenBase = new THREE.Mesh(new THREE.BoxGeometry(2.0,1.9,1.7), brickMat);
+  ovenBase.position.y=0.95; ovenBase.castShadow=true; ovenBase.receiveShadow=true;
+  oven.add(ovenBase);
+
+  const chimneyMat = new THREE.MeshStandardMaterial({map:brickTex, roughness:0.85, flatShading:true});
+  const chimney = new THREE.Mesh(new THREE.ConeGeometry(1.5,1.7,4), chimneyMat);
+  chimney.position.y=2.72; chimney.rotation.y=Math.PI/4; chimney.castShadow=true;
+  oven.add(chimney);
+  const chimneyCap = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.28,0.32), new THREE.MeshStandardMaterial({color:0x3a2517, roughness:0.7}));
+  chimneyCap.position.y=3.58; chimneyCap.castShadow=true;
+  oven.add(chimneyCap);
+
+  const archOuter = archShape(0.58,0.32,0.58);
+  const archMouthGeo = new THREE.ExtrudeGeometry(archOuter, {depth:0.1, bevelEnabled:false});
+  archMouthGeo.translate(0,0,-0.05);
+  const archMouth = new THREE.Mesh(archMouthGeo, new THREE.MeshStandardMaterial({color:0x241209, roughness:0.95, side:THREE.DoubleSide}));
+  archMouth.position.set(0,0.14,0.86);
+  oven.add(archMouth);
+
+  const glowMat = new THREE.MeshStandardMaterial({color:0xff8a3d, emissive:0xff6a1a, emissiveIntensity:1.7, roughness:0.5, side:THREE.DoubleSide});
+  const archInner = archShape(0.45,0.22,0.45);
+  const glowMesh = new THREE.Mesh(new THREE.ShapeGeometry(archInner), glowMat);
+  glowMesh.position.set(0,0.14,0.915);
+  oven.add(glowMesh);
+
+  const keystone = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.16,0.13), new THREE.MeshStandardMaterial({color:0xe0a55c, roughness:0.6}));
+  keystone.position.set(0,0.14+0.58,0.85); keystone.castShadow=true;
+  oven.add(keystone);
+
+  const badgeMat = new THREE.MeshPhysicalMaterial({color:0xf4b942, roughness:0.35, clearcoat:0.6, clearcoatRoughness:0.2});
+  const badge = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.05,20), badgeMat);
+  badge.rotation.x=Math.PI/2; badge.position.set(0.78,1.68,0.86); badge.castShadow=true;
+  oven.add(badge);
+
+  const glowLight = new THREE.PointLight(0xff7a2e, 2.2, 5.5, 2);
+  glowLight.position.set(0, 0.9, 1.0);
+  oven.add(glowLight);
+
+  oven.position.set(x,0,z);
+  scene.add(oven);
+  return { group:oven, glowMat, glowLight, badge };
+}
+
+const metalTex = makeMetalTexture();
+const metalMat = new THREE.MeshStandardMaterial({map:metalTex, roughness:0.35, metalness:0.75});
+function makeMixer(){
+  const g=new THREE.Group();
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.32,0.16,20), metalMat);
+  base.position.y=0.08; base.castShadow=true; g.add(base);
+  const column=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.9,0.14), metalMat);
+  column.position.y=0.55; column.castShadow=true; g.add(column);
+  const bowl=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.24,0.4,24,1,true), new THREE.MeshStandardMaterial({map:metalTex, roughness:0.3, metalness:0.8, side:THREE.DoubleSide}));
+  bowl.position.y=0.32; bowl.castShadow=true; g.add(bowl);
+  const dough=new THREE.Mesh(new THREE.SphereGeometry(0.28,14,10), new THREE.MeshStandardMaterial({color:0xead9ad, roughness:0.85}));
+  perturbGeometry(dough.geometry,0.02,5);
+  dough.scale.set(1,0.5,1); dough.position.y=0.4; dough.castShadow=true; g.add(dough);
+  const arm=new THREE.Mesh(new THREE.TorusGeometry(0.18,0.035,10,20,Math.PI), metalMat);
+  arm.position.set(0,0.98,0.05); arm.rotation.x=Math.PI/2; arm.castShadow=true; g.add(arm);
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.16,0.2), metalMat);
+  head.position.set(0,0.98,0.22); head.castShadow=true; g.add(head);
+  return g;
+}
+const MIXER_POS = {x:-0.4, z:-3.5};
+const mixer = makeMixer();
+mixer.position.set(MIXER_POS.x,0,MIXER_POS.z);
+scene.add(mixer);
+
+function makePastryCase(x,z){
+  const g=new THREE.Group();
+  const frameMat=new THREE.MeshStandardMaterial({map:makeWoodTexture("#dfe8ee"), roughness:0.5});
+  const base=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.55,0.75), frameMat);
+  base.position.y=0.275; base.castShadow=true; base.receiveShadow=true; g.add(base);
+  const glassMat=new THREE.MeshPhysicalMaterial({color:0xdfeffa, roughness:0.06, transmission:0.92, thickness:0.15, ior:1.4, clearcoat:0.6, metalness:0});
+  const glassTop=new THREE.Mesh(new THREE.BoxGeometry(1.42,0.55,0.67), glassMat);
+  glassTop.position.y=0.83; g.add(glassTop);
+  const frameTop=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.06,0.75), frameMat);
+  frameTop.position.y=1.11; frameTop.castShadow=true; g.add(frameTop);
+  const pastryColors=[0xffb3c6,0xffe08a,0xd9a06b,0xf28fa3,0xc9e4b5];
+  for(let i=0;i<5;i++){
+    const p=new THREE.Mesh(new THREE.SphereGeometry(0.1,12,10), new THREE.MeshPhysicalMaterial({color:pastryColors[i], roughness:0.4, clearcoat:0.5, clearcoatRoughness:0.3}));
+    perturbGeometry(p.geometry,0.012,i*2);
+    p.position.set(-0.5+i*0.25,0.62,0); p.castShadow=true; g.add(p);
+  }
+  g.position.set(x,0,z);
+  return g;
+}
+scene.add(makePastryCase(3.2,-1.2));
+
+const counterWoodTop = makeWoodTexture("#c08a55");
+const counterWoodBody = makeWoodTexture("#8a5a34");
+function makeCounter(x,z,w,d){
+  const g=new THREE.Group();
+  const top=new THREE.Mesh(new THREE.BoxGeometry(w,0.18,d), new THREE.MeshStandardMaterial({map:counterWoodTop, roughness:0.42}));
+  top.position.y=0.9; top.castShadow=true; top.receiveShadow=true; g.add(top);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(w*0.94,0.82,d*0.9), new THREE.MeshStandardMaterial({map:counterWoodBody, roughness:0.6}));
+  body.position.y=0.45; body.castShadow=true; body.receiveShadow=true; g.add(body);
+  const legMat=new THREE.MeshStandardMaterial({color:0x3a2517, roughness:0.7});
+  [[-w/2+0.15,-d/2+0.15],[w/2-0.15,-d/2+0.15],[-w/2+0.15,d/2-0.15],[w/2-0.15,d/2-0.15]].forEach(([lx,lz])=>{
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,0.86,10), legMat);
+    leg.position.set(lx,0.43,lz); leg.castShadow=true; g.add(leg);
+  });
+  g.position.set(x,0,z);
+  return g;
+}
+const displayCounter = makeCounter(-0.6,1.6,4.4,0.95);
+scene.add(displayCounter);
+
+function addBaguette(parent,x,z,rot,seed){
+  const geo=new THREE.CapsuleGeometry(0.08,0.58,4,10);
+  perturbGeometry(geo,0.012,seed||1);
+  const baguette=new THREE.Mesh(geo, breadMat());
+  baguette.rotation.z=Math.PI/2; baguette.rotation.y=rot||0;
+  baguette.position.set(x,1.06,z); baguette.castShadow=true;
+  parent.add(baguette);
+}
+function addCroissant(parent,x,z,seed){
+  const geo=new THREE.TorusGeometry(0.15,0.065,8,16,Math.PI*1.3);
+  perturbGeometry(geo,0.01,seed||2);
+  const cr=new THREE.Mesh(geo, breadMat());
+  cr.position.set(x,1.05,z); cr.rotation.x=Math.PI/2; cr.castShadow=true;
+  parent.add(cr);
+}
+function addBoule(parent,x,z,seed){
+  const geo=new THREE.SphereGeometry(0.19,14,10);
+  perturbGeometry(geo,0.022,seed||3);
+  const boule=new THREE.Mesh(geo, crustDark());
+  boule.scale.set(1,0.78,1); boule.position.set(x,1.03,z); boule.castShadow=true;
+  parent.add(boule);
+}
+for(let i=0;i<4;i++) addBaguette(displayCounter,-1.7+i*0.42,1.5,0.15*(i%2),i);
+for(let i=0;i<5;i++) addCroissant(displayCounter,-1.7+i*0.4,1.85,i+10);
+for(let i=0;i<3;i++) addBoule(displayCounter,0.8+i*0.42,1.6,i+20);
+
+/* Table client (deco achetable) */
+function makeCafeTable(x,z){
+  const g=new THREE.Group();
+  const top=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,0.05,20), new THREE.MeshStandardMaterial({map:makeWoodTexture("#a9713e"), roughness:0.5}));
+  top.position.y=0.72; top.castShadow=true; g.add(top);
+  const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.06,0.7,10), new THREE.MeshStandardMaterial({color:0x2f1c0f, roughness:0.6}));
+  leg.position.y=0.35; leg.castShadow=true; g.add(leg);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.03,16), new THREE.MeshStandardMaterial({color:0x2f1c0f, roughness:0.6}));
+  base.position.y=0.02; base.castShadow=true; g.add(base);
+  g.position.set(x,0,z);
+  scene.add(g);
+  return g;
+}
+function makePlant(x,z){
+  const g=new THREE.Group();
+  const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.13,0.22,12), new THREE.MeshStandardMaterial({color:0xb5744a, roughness:0.8}));
+  pot.position.y=0.11; pot.castShadow=true; g.add(pot);
+  const leaves=new THREE.Mesh(new THREE.SphereGeometry(0.24,10,10), new THREE.MeshStandardMaterial({color:0x4caf6e, roughness:0.7}));
+  perturbGeometry(leaves.geometry,0.03,8);
+  leaves.position.y=0.38; leaves.scale.set(1,1.3,1); leaves.castShadow=true; g.add(leaves);
+  g.position.set(x,0,z);
+  scene.add(g);
+  return g;
+}
+makePlant(4.7,3.6);
+makePlant(4.3,4.0);
+
+/* Petit stand de caisse (podium bois + ecran) : reutilisable pour en acheter d'autres */
+function buildCheckout(x,z){
+  const g=new THREE.Group();
+  const podium=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.85,0.5), new THREE.MeshStandardMaterial({map:makeWoodTexture("#8a5a34"), roughness:0.55}));
+  podium.position.y=0.425; podium.castShadow=true; podium.receiveShadow=true; g.add(podium);
+  const screen=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.24,0.04), new THREE.MeshStandardMaterial({color:0x1b2530, roughness:0.4}));
+  screen.position.set(0,0.98,0.2); screen.rotation.x=-0.25; screen.castShadow=true; g.add(screen);
+  const screenGlow = new THREE.MeshStandardMaterial({color:0x333333, emissive:0x333333, emissiveIntensity:0.4});
+  const screenFace = new THREE.Mesh(new THREE.PlaneGeometry(0.26,0.18), screenGlow);
+  screenFace.position.set(0,0.98,0.223); screenFace.rotation.x=-0.25; g.add(screenFace);
+  g.position.set(x,0,z);
+  scene.add(g);
+  return { group:g, screenGlow };
+}
+
+/* ============================================================
+   4. PERSONNAGES "MEEPLE" + IA EMPLOYES/CLIENTS
+   ============================================================ */
+function makeMeeple({bodyColor=0xffffff, skin=0xf0c090, accent=0xf4b942, hat=false, cap=false, hood=false, hair="#4a3220"}={}){
+  const g=new THREE.Group();
+  const baseMat=new THREE.MeshPhysicalMaterial({color:0x2f9e57, roughness:0.45, clearcoat:0.5, clearcoatRoughness:0.3});
+  const baseMesh=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.36,0.08,24), baseMat);
+  baseMesh.position.y=0.04; baseMesh.castShadow=true; baseMesh.receiveShadow=true; g.add(baseMesh);
+  const baseRing=new THREE.Mesh(new THREE.TorusGeometry(0.35,0.02,8,24), new THREE.MeshPhysicalMaterial({color:0x1d6b39, roughness:0.4, clearcoat:0.6}));
+  baseRing.rotation.x=Math.PI/2; baseRing.position.y=0.08; g.add(baseRing);
+
+  const bodyMat=new THREE.MeshPhysicalMaterial({map:makeFabricTexture("#"+bodyColor.toString(16).padStart(6,"0")), roughness:0.55, clearcoat:0.35, clearcoatRoughness:0.35});
+  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(0.24,0.4,6,14), bodyMat);
+  torso.position.y=0.46; torso.castShadow=true; g.add(torso);
+
+  const armMat=new THREE.MeshPhysicalMaterial({color:hood?0x2b2b2b:skin, roughness:0.5, clearcoat:0.4});
+  [-1,1].forEach(side=>{
+    const arm=new THREE.Mesh(new THREE.CapsuleGeometry(0.06,0.28,4,8), armMat);
+    arm.position.set(side*0.28,0.46,0); arm.rotation.z=side*0.22; arm.castShadow=true; g.add(arm);
+  });
+
+  if(accent){
+    const apronMat=new THREE.MeshPhysicalMaterial({color:accent, roughness:0.5, clearcoat:0.4, clearcoatRoughness:0.3});
+    const apron=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.05), apronMat);
+    apron.position.set(0,0.38,0.21); apron.castShadow=true; g.add(apron);
+    const strapMat=new THREE.MeshStandardMaterial({color:accent, roughness:0.6});
+    [-0.09,0.09].forEach(dx=>{
+      const strap=new THREE.Mesh(new THREE.BoxGeometry(0.035,0.22,0.03), strapMat);
+      strap.position.set(dx,0.58,0.19); strap.rotation.z=dx*0.5; g.add(strap);
+    });
+  }
+
+  const headMat=new THREE.MeshPhysicalMaterial({color:skin, roughness:0.4, clearcoat:0.55, clearcoatRoughness:0.25});
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.22,24,24), headMat);
+  head.position.y=0.86; head.castShadow=true; g.add(head);
+
+  if(hood){
+    const hoodMat = new THREE.MeshPhysicalMaterial({color:0xc0392b, roughness:0.5, clearcoat:0.3});
+    const hoodMesh = new THREE.Mesh(new THREE.SphereGeometry(0.245,16,16,0,Math.PI*2,0,Math.PI*0.62), hoodMat);
+    hoodMesh.position.y=0.9; g.add(hoodMesh);
+  } else if(!hat){
+    const hairMesh=new THREE.Mesh(new THREE.SphereGeometry(0.225,16,16,0,Math.PI*2,0,Math.PI*0.55), new THREE.MeshStandardMaterial({color:hair, roughness:0.6}));
+    hairMesh.position.y=0.93; g.add(hairMesh);
+  }
+
+  [-0.085,0.085].forEach(dx=>{
+    const sclera=new THREE.Mesh(new THREE.SphereGeometry(0.035,10,10), new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.3}));
+    sclera.position.set(dx,0.88,0.195); g.add(sclera);
+    const pupil=new THREE.Mesh(new THREE.SphereGeometry(0.017,8,8), new THREE.MeshStandardMaterial({color:hood?0x8b1a1a:0x241408, roughness:0.2}));
+    pupil.position.set(dx,0.88,0.225); g.add(pupil);
+  });
+  if(!hood){
+    [-0.13,0.13].forEach(dx=>{
+      const cheek=new THREE.Mesh(new THREE.SphereGeometry(0.028,8,8), new THREE.MeshStandardMaterial({color:0xff9fab, roughness:0.7, transparent:true, opacity:0.55}));
+      cheek.position.set(dx,0.82,0.185); g.add(cheek);
+    });
+  }
+
+  if(hat){
+    const toqueMat=new THREE.MeshPhysicalMaterial({color:0xffffff, roughness:0.35, clearcoat:0.6, clearcoatRoughness:0.2});
+    const band=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,0.1,20), toqueMat);
+    band.position.y=1.03; band.castShadow=true; g.add(band);
+    const puff=new THREE.Mesh(new THREE.SphereGeometry(0.19,16,16), toqueMat);
+    puff.position.y=1.2; puff.scale.set(1,0.9,1); puff.castShadow=true; g.add(puff);
+  } else if(cap){
+    const capMat=new THREE.MeshPhysicalMaterial({color:0x1f1f2b, roughness:0.4, clearcoat:0.5});
+    const capMesh=new THREE.Mesh(new THREE.SphereGeometry(0.225,16,16,0,Math.PI*2,0,Math.PI*0.5), capMat);
+    capMesh.position.y=0.95; g.add(capMesh);
+    const brim=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,0.02,16), capMat);
+    brim.position.set(0,0.92,0.18); brim.rotation.x=Math.PI*0.42; g.add(brim);
+  }
+
+  // bulle de commande / statut, affichee au-dessus de la tete via un sprite canvas
+  const bubbleCanvas = document.createElement("canvas"); bubbleCanvas.width=128; bubbleCanvas.height=64;
+  const bubbleTex = new THREE.CanvasTexture(bubbleCanvas);
+  const bubbleMat = new THREE.SpriteMaterial({map:bubbleTex, transparent:true, depthTest:false});
+  const bubbleSprite = new THREE.Sprite(bubbleMat);
+  bubbleSprite.scale.set(0.9,0.45,1);
+  bubbleSprite.position.set(0,1.5,0);
+  bubbleSprite.visible = false;
+  g.add(bubbleSprite);
+  g.userData.bubbleCanvas = bubbleCanvas;
+  g.userData.bubbleTex = bubbleTex;
+  g.userData.bubbleSprite = bubbleSprite;
+
+  g.userData.bob = Math.random()*Math.PI*2;
+  return g;
+}
+function setBubble(mesh, text){
+  const c = mesh.userData.bubbleCanvas;
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0,0,c.width,c.height);
+  if(text){
+    ctx.fillStyle="rgba(255,255,255,0.95)";
+    roundedRect(ctx,4,4,c.width-8,c.height-8,14);
+    ctx.fill();
+    ctx.fillStyle="#4a3220";
+    ctx.font="bold 30px sans-serif";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(text, c.width/2, c.height/2);
+    mesh.userData.bubbleSprite.visible = true;
+  } else {
+    mesh.userData.bubbleSprite.visible = false;
+  }
+  mesh.userData.bubbleTex.needsUpdate = true;
+}
+function roundedRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+/* mascotte TikoWiko, deco fixe sur l'etagere */
+const gameLoopHooks = [];
+(function placeMascot(){
+  const mascot=new THREE.Group();
+  const mascotSkin=new THREE.MeshPhysicalMaterial({color:0xc1652a, roughness:0.35, clearcoat:0.5, clearcoatRoughness:0.25});
+  const mBody=new THREE.Mesh(new THREE.SphereGeometry(0.22,20,20), mascotSkin); mascot.add(mBody);
+  const mBelly=new THREE.Mesh(new THREE.SphereGeometry(0.13,16,16), new THREE.MeshPhysicalMaterial({color:0xf7ecd9, roughness:0.4, clearcoat:0.4}));
+  mBelly.position.set(0,-0.02,0.16); mascot.add(mBelly);
+  [-0.14,0.14].forEach(dx=>{
+    const ear=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,12), new THREE.MeshStandardMaterial({color:0x7a3d16, roughness:0.5}));
+    ear.position.set(dx,0.22,0); mascot.add(ear);
+  });
+  [-0.08,0.08].forEach(dx=>{
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(0.022,8,8), new THREE.MeshStandardMaterial({color:0x241408}));
+    eye.position.set(dx,0.03,0.2); mascot.add(eye);
+  });
+  mascot.position.set(2.6,2.95,-4.0);
+  mascot.scale.setScalar(1.15);
+  scene.add(mascot);
+  gameLoopHooks.push((t)=>{ mascot.rotation.y = Math.sin(t*0.6)*0.3; });
+})();
+
+/* ------------------------------------------------------------
+   Deplacement utilitaire : rapproche un mesh de (tx,tz) au sol,
+   avec une vitesse donnee, et l'oriente vers sa cible.
+   ------------------------------------------------------------ */
+function moveTowards(obj, tx, tz, speed, dt){
+  const dx = tx-obj.position.x, dz = tz-obj.position.z;
+  const dist = Math.hypot(dx,dz);
+  if(dist < 0.06) return true;
+  const step = Math.min(dist, speed*dt);
+  obj.position.x += (dx/dist)*step;
+  obj.position.z += (dz/dist)*step;
+  obj.rotation.y = Math.atan2(dx,dz);
+  return false;
+}
+
+/* ============================================================
+   5. ETAT DU JEU : recettes, fours, caisses, employes, boutique
+   ============================================================ */
+const RECIPES = {
+  baguette:  {name:"Baguette",  icon:"🥖", price:3, prepTime:2.2, bakeTime:4.5, unlocked:true,  unlockCost:0},
+  croissant: {name:"Croissant", icon:"🥐", price:4, prepTime:2.6, bakeTime:5.2, unlocked:false, unlockCost:150},
+  boule:     {name:"Boule",     icon:"🍞", price:5, prepTime:3.0, bakeTime:6.0, unlocked:false, unlockCost:250},
+};
+const RECIPE_KEYS = Object.keys(RECIPES);
+
+const OVEN_SLOT_POS = [{x:-3.1,z:-2.9}, {x:-1.2,z:-3.55}, {x:0.9,z:-3.55}];
+const CHECKOUT_SLOT_POS = [{x:2.0,z:3.6}, {x:3.6,z:3.7}, {x:0.3,z:3.9}];
+const ENTRANCE = {x:4.6, z:4.4};
+const REST_SPOT = {x:4.6, z:-2.4};
+
+const state = {
+  money: 250,
+  day: 1,
+  minutes: 8*60,
+  xp: 0, level: 1,
+  todayRevenue: 0, todayExpenses: 0,
+  history: [],           // {day, revenue, expenses, profit}
+  stock: {baguette:0, croissant:0, boule:0},
+  missedSales: 0,
+  soldToday: 0,
+  attractiveness: 0,     // bonus de spawn client (decorations)
+  ovens: [],              // {x,z,tier,state,progress,recipe,visual,reserved}
+  checkouts: [],           // {x,z,staffId,queue:[],busy,progress,visual}
+  staff: [],               // employes (voir hireStaff)
+  customers: [],
+  soundOn: true,
+  dailyGoal: null,
+  eventActive: null,
+  eventTimer: 0,
+};
+
+/* --- Fours : le premier est deja construit lors de l'init --- */
+function addOven(){
+  if(state.ovens.length >= OVEN_SLOT_POS.length) return null;
+  const pos = OVEN_SLOT_POS[state.ovens.length];
+  const visual = buildOven(pos.x, pos.z);
+  const oven = { x:pos.x, z:pos.z, tier:1, state:"idle", progress:0, recipe:null, visual, reserved:false };
+  state.ovens.push(oven);
+  return oven;
+}
+function addCheckout(){
+  if(state.checkouts.length >= CHECKOUT_SLOT_POS.length) return null;
+  const pos = CHECKOUT_SLOT_POS[state.checkouts.length];
+  const visual = buildCheckout(pos.x, pos.z);
+  const co = { x:pos.x, z:pos.z, staffId:null, queue:[], busy:false, progress:0, visual };
+  state.checkouts.push(co);
+  return co;
+}
+
+/* --- Employes --- */
+let EMP_ID = 1;
+const ROLE_DEFAULTS = {
+  baker:  {speedBase:1.5, effBase:1.0, salaryBase:18, icon:"👨‍🍳"},
+  seller: {speedBase:1.7, effBase:1.0, salaryBase:15, icon:"🧺"},
+  cashier:{speedBase:1.5, effBase:1.0, salaryBase:16, icon:"🧾"},
+  guard:  {speedBase:1.4, effBase:1.0, salaryBase:22, icon:"🛡️"},
+};
+function hireStaff(role){
+  const def = ROLE_DEFAULTS[role];
+  const visual = makeMeeple(
+    role==="baker"  ? {bodyColor:0xffffff, accent:0xf4b942, hat:true} :
+    role==="seller" ? {bodyColor:0x4caf6e, accent:0x2f7a4a, hair:"#4a3220"} :
+    role==="cashier"? {bodyColor:0x5fb3d9, accent:0x2f7ea3, hair:"#3a2417"} :
+                       {bodyColor:0x2c3a4a, accent:null, cap:true, hair:"#1a1108"}
+  );
+  visual.position.set(REST_SPOT.x + Math.random()*0.6, 0, REST_SPOT.z + Math.random()*0.6);
+  scene.add(visual);
+  const emp = {
+    id: EMP_ID++, role, visual,
+    speed: def.speedBase, efficiency: def.effBase, level: 1, salary: def.salaryBase,
+    state: "idle", targetOven:null, targetCheckout:null, progress:0, holding:0,
+  };
+  state.staff.push(emp);
+  return emp;
+}
+function upgradeStaff(emp){
+  emp.level++;
+  emp.speed *= 1.12;
+  emp.efficiency *= 1.15;
+  emp.salary = Math.round(emp.salary*1.2);
+}
+
+/* --- Boucle de production : petrissage partage (un seul petrin pour l'instant) --- */
+let mixerBusy = false;
+function updateBaker(emp, dt){
+  switch(emp.state){
+    case "idle": {
+      if(!mixerBusy){
+        mixerBusy = true;
+        emp.state = "toMixer";
+      } else {
+        moveTowards(emp.visual, REST_SPOT.x, REST_SPOT.z, emp.speed, dt);
+      }
+      break;
+    }
+    case "toMixer":
+      if(moveTowards(emp.visual, MIXER_POS.x, MIXER_POS.z+0.5, emp.speed, dt)){
+        emp.state="kneading"; emp.progress=0;
+        setBubble(emp.visual, "🥣");
+      }
+      break;
+    case "kneading": {
+      const recipe = pickRecipeToBake();
+      const need = RECIPES[recipe].prepTime;
+      emp.progress += dt*emp.efficiency;
+      if(emp.progress >= need){
+        mixerBusy = false;
+        setBubble(emp.visual, null);
+        const oven = findFreeOven();
+        if(oven){
+          oven.reserved = true;
+          emp.targetOven = oven; emp.pendingRecipe = recipe;
+          emp.state = "toOven";
+        } else {
+          emp.state = "idle";
+        }
+      }
+      break;
+    }
+    case "toOven": {
+      const o = emp.targetOven;
+      if(moveTowards(emp.visual, o.x, o.z+1.1, emp.speed, dt)){
+        o.state="baking"; o.progress=0; o.recipe=emp.pendingRecipe; o.reserved=false;
+        emp.state="idle"; emp.targetOven=null;
+        playTone(520,0.08,"sine");
+      }
+      break;
+    }
+  }
+}
+function pickRecipeToBake(){
+  const unlocked = RECIPE_KEYS.filter(k=>RECIPES[k].unlocked);
+  // priorise la recette la moins stockee pour varier l'offre
+  return unlocked.sort((a,b)=>state.stock[a]-state.stock[b])[0] || "baguette";
+}
+function findFreeOven(){
+  return state.ovens.find(o=>o.state==="idle" && !o.reserved);
+}
+function updateOvens(dt){
+  state.ovens.forEach(o=>{
+    if(o.state==="baking"){
+      const bakeTime = (RECIPES[o.recipe] && RECIPES[o.recipe].bakeTime) || 5;
+      const speedMul = 0.6 + o.tier*0.4;
+      o.progress += (dt*speedMul)/bakeTime;
+      o.visual.glowLight.intensity = 2.0+Math.sin(performance.now()/120)*0.4;
+      if(o.progress>=1){ o.progress=1; o.state="ready"; playTone(780,0.12,"triangle"); }
+    }
+  });
+}
+function updateSeller(emp, dt){
+  switch(emp.state){
+    case "idle": {
+      const oven = state.ovens.find(o=>o.state==="ready" && o.claimedBy==null);
+      if(oven){ oven.claimedBy = emp.id; emp.targetOven = oven; emp.state="toOven"; }
+      else moveTowards(emp.visual, REST_SPOT.x, REST_SPOT.z, emp.speed, dt);
+      break;
+    }
+    case "toOven": {
+      const o = emp.targetOven;
+      if(moveTowards(emp.visual, o.x, o.z+1.1, emp.speed, dt)){
+        const batch = 3 + Math.floor(emp.efficiency);
+        emp.holding = {recipe:o.recipe, qty:batch};
+        o.state="idle"; o.progress=0; o.recipe=null; o.claimedBy=null;
+        setBubble(emp.visual, RECIPES[emp.holding.recipe].icon);
+        emp.state="toCounter";
+      }
+      break;
+    }
+    case "toCounter": {
+      if(moveTowards(emp.visual, -0.6, 1.15, emp.speed, dt)){
+        state.stock[emp.holding.recipe] += emp.holding.qty;
+        setBubble(emp.visual, null);
+        emp.holding = 0; emp.state="idle"; emp.targetOven=null;
+      }
+      break;
+    }
+  }
+}
+
+/* --- Caissiers : assignes a un stand des l'embauche --- */
+function assignCheckout(emp){
+  const co = state.checkouts.find(c=>c.staffId==null);
+  if(co){ co.staffId = emp.id; emp.targetCheckout = co; }
+}
+function updateCashier(emp, dt){
+  if(!emp.targetCheckout){ assignCheckout(emp); if(!emp.targetCheckout){ moveTowards(emp.visual, REST_SPOT.x, REST_SPOT.z, emp.speed, dt); return; } }
+  const co = emp.targetCheckout;
+  if(emp.state!=="atCheckout"){
+    if(moveTowards(emp.visual, co.x, co.z-0.5, emp.speed, dt)) emp.state="atCheckout";
+    return;
+  }
+  if(co.queue.length===0){ co.busy=false; return; }
+  if(!co.busy){ co.busy=true; co.progress=0; }
+  else {
+    co.progress += dt*emp.efficiency*0.8;
+    co.visual.screenGlow.emissiveIntensity = 0.6+Math.sin(performance.now()/100)*0.2;
+    if(co.progress>=1){
+      co.progress=0; co.busy=false;
+      const client = co.queue.shift();
+      if(client) completeSale(client);
+    }
+  }
+}
+
+/* --- Vigiles --- */
+function updateGuard(emp, dt){
+  const thief = state.customers.find(c=>c.isThief && c.state==="fleeing" && c.spotted);
+  if(thief){
+    if(moveTowards(emp.visual, thief.visual.position.x, thief.visual.position.z, emp.speed*1.5, dt) || dist2(emp.visual.position, thief.visual.position) < 0.5){
+      catchThief(thief);
+    }
+    return;
+  }
+  moveTowards(emp.visual, ENTRANCE.x-0.6, ENTRANCE.z-0.6, emp.speed*0.5, dt);
+}
+function dist2(a,b){ return Math.hypot(a.x-b.x, a.z-b.z); }
+
+/* ============================================================
+   CLIENTS
+   ============================================================ */
+let CUST_ID = 1;
+function spawnCustomer(){
+  const isThief = state.staff.some(s=>s.role!=="guard") && Math.random() < thiefChance();
+  const unlocked = RECIPE_KEYS.filter(k=>RECIPES[k].unlocked);
+  const desired = unlocked[Math.floor(Math.random()*unlocked.length)] || "baguette";
+  const visual = makeMeeple(isThief
+    ? {bodyColor:0x2b2b2b, accent:null, hood:true}
+    : {bodyColor:[0xe86f9c,0x8fd1e0,0xffd166,0xb784d4,0x8fd19e][Math.floor(Math.random()*5)], accent:null, hair:"#3a2417"});
+  visual.position.set(ENTRANCE.x + (Math.random()-0.5), 0, ENTRANCE.z);
+  scene.add(visual);
+  const c = { id:CUST_ID++, isThief, desired, visual, state:"toCounter", spotted:false, waitT:0, checkout:null };
+  state.customers.push(c);
+}
+function thiefChance(){ return Math.min(0.05 + state.level*0.008, 0.16); }
+function updateCustomer(c, dt){
+  switch(c.state){
+    case "toCounter":
+      if(moveTowards(c.visual, -0.6+(Math.random()-0.5)*1.0, 1.15, 1.5, dt)){
+        c.state="taking"; c.waitT=0.5;
+        setBubble(c.visual, c.isThief? "🗝️" : RECIPES[c.desired].icon);
+      }
+      break;
+    case "taking":
+      c.waitT -= dt;
+      if(c.waitT<=0){
+        if(state.stock[c.desired] > 0){
+          state.stock[c.desired]--;
+          if(c.isThief){
+            attemptDetection(c);
+            c.state = "fleeing";
+          } else {
+            c.price = RECIPES[c.desired].price;
+            goToCheckout(c);
+          }
+        } else {
+          state.missedSales++;
+          setBubble(c.visual, "😞");
+          c.state = "leaving";
+        }
+      }
+      break;
+    case "fleeing":
+      setBubble(c.visual, null);
+      if(moveTowards(c.visual, ENTRANCE.x, ENTRANCE.z, 2.2, dt)) removeCustomer(c);
+      break;
+    case "leaving":
+      if(moveTowards(c.visual, ENTRANCE.x, ENTRANCE.z, 1.5, dt)) removeCustomer(c);
+      break;
+    case "toCheckout": {
+      const qi = c.checkout.queue.indexOf(c);
+      const tz = c.checkout.z - 0.5 - qi*0.45;
+      if(moveTowards(c.visual, c.checkout.x, tz, 1.5, dt)) c.state="waiting";
+      break;
+    }
+    case "waiting": {
+      const qi = c.checkout.queue.indexOf(c);
+      if(qi<0){ c.state="leaving"; break; }
+      const tz = c.checkout.z - 0.5 - qi*0.45;
+      moveTowards(c.visual, c.checkout.x, tz, 1.5, dt);
+      break;
+    }
+  }
+}
+function goToCheckout(c){
+  const open = state.checkouts.filter(co=>co.staffId!=null);
+  if(open.length===0){ c.state="leaving"; return; }
+  const best = open.sort((a,b)=>a.queue.length-b.queue.length)[0];
+  best.queue.push(c); c.checkout=best; c.state="toCheckout";
+}
+function completeSale(c){
+  state.money += c.price;
+  state.todayRevenue += c.price;
+  state.soldToday++;
+  addXP(2);
+  advanceGoal(1);
+  playTone(880,0.06,"square"); playTone(1180,0.09,"square",0.05);
+  setBubble(c.visual, "✅");
+  spawnFloatingText(c.visual.position, `+${c.price}€`, "#7CFC9A");
+  c.state="leaving";
+  refreshTop();
+}
+function attemptDetection(c){
+  if(c.spotted) return;
+  const guardCount = state.staff.filter(s=>s.role==="guard").length;
+  if(guardCount===0) return;
+  const chance = 0.35 + guardCount*0.15;
+  if(Math.random() < chance){ c.spotted = true; toast("🚨 Voleur détecté !"); playTone(220,0.3,"sawtooth"); }
+}
+function catchThief(c){
+  toast("👮 Voleur arrêté !");
+  playTone(660,0.1,"square");
+  removeCustomer(c);
+}
+function removeCustomer(c){
+  scene.remove(c.visual);
+  const i = state.customers.indexOf(c);
+  if(i>=0) state.customers.splice(i,1);
+}
+
+/* petit texte flottant "+3€" au-dessus d'un point 3D, en overlay HTML simple */
+function spawnFloatingText(pos3d, text, color){
+  const v = pos3d.clone(); v.y += 1.6;
+  v.project(camera);
+  const x = (v.x*0.5+0.5)*innerWidth, y = (1-(v.y*0.5+0.5))*innerHeight;
+  const el = document.createElement("div");
+  el.textContent = text;
+  el.style.cssText = `position:absolute;left:${x}px;top:${y}px;color:${color};font-weight:800;font-family:'Baloo 2';font-size:16px;text-shadow:0 2px 4px rgba(0,0,0,.5);pointer-events:none;z-index:55;transition:transform 1s ease-out, opacity 1s ease-out;`;
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{ el.style.transform="translateY(-40px)"; el.style.opacity="0"; });
+  setTimeout(()=>el.remove(),1050);
+}
+
+/* ============================================================
+   6. XP / NIVEAU / OBJECTIF DU JOUR / EVENEMENTS ALEATOIRES
+   ============================================================ */
+function addXP(v){
+  state.xp += v;
+  const need = 50*state.level;
+  if(state.xp >= need){
+    state.xp -= need; state.level++;
+    showReward("⭐", "Niveau supérieur !", `Tu es maintenant niveau ${state.level}. +30€ de prime.`);
+    state.money += 30;
+    playTone(660,0.1,"triangle"); playTone(880,0.12,"triangle",0.1); playTone(1100,0.16,"triangle",0.2);
+  }
+  refreshTop();
+}
+function newDailyGoal(){
+  const target = 8 + state.day*2;
+  state.dailyGoal = { desc:`Vendre ${target} produits aujourd'hui`, target, progress:0, reward:20+state.day*5, done:false };
+  refreshGoalUI();
+}
+function advanceGoal(n){
+  if(!state.dailyGoal || state.dailyGoal.done) return;
+  state.dailyGoal.progress += n;
+  if(state.dailyGoal.progress >= state.dailyGoal.target){
+    state.dailyGoal.done = true;
+    state.money += state.dailyGoal.reward;
+    showReward("🎯", "Objectif du jour atteint !", `+${state.dailyGoal.reward}€ de récompense.`);
+  }
+  refreshGoalUI();
+}
+function refreshGoalUI(){
+  if(!state.dailyGoal) return;
+  document.getElementById("goal-desc").textContent = "🎯 " + state.dailyGoal.desc;
+  document.getElementById("goal-count").textContent = `${Math.min(state.dailyGoal.progress,state.dailyGoal.target)}/${state.dailyGoal.target}`;
+  document.getElementById("goal-fill").style.width = Math.min(100, state.dailyGoal.progress/state.dailyGoal.target*100)+"%";
+}
+function maybeTriggerEvent(dt){
+  state.eventTimer -= dt;
+  if(state.eventTimer <= 0){
+    state.eventTimer = 45 + Math.random()*40;
+    if(state.eventActive) { state.eventActive=null; }
+    else if(Math.random()<0.5){
+      state.eventActive = {type:"rush", timeLeft:18};
+      toast("⚡ Coup de rush ! Plus de clients pendant 18s");
+    }
+  }
+  if(state.eventActive){
+    state.eventActive.timeLeft -= dt;
+    if(state.eventActive.timeLeft<=0) state.eventActive=null;
+  }
+}
+
+/* ============================================================
+   7. SONS (WebAudio, generes, aucun fichier externe)
+   ============================================================ */
+let audioCtx = null;
+function ensureAudio(){ if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } }
+function playTone(freq, dur, type, delay){
+  if(!state.soundOn) return;
+  try{
+    ensureAudio();
+    const t0 = audioCtx.currentTime + (delay||0);
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type||"sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.18, t0+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t0); osc.stop(t0+dur+0.02);
+  }catch(e){ /* audio non disponible, on ignore silencieusement */ }
+}
+document.getElementById("soundBtn").addEventListener("click", ()=>{
+  state.soundOn = !state.soundOn;
+  document.getElementById("soundBtn").textContent = state.soundOn ? "🔊" : "🔇";
+  ensureAudio();
+});
+addEventListener("pointerdown", ()=>ensureAudio(), {once:true});
+
+/* ============================================================
+   TOASTS + POPUP DE RECOMPENSE
+   ============================================================ */
+function toast(text){
+  const layer = document.getElementById("toast-layer");
+  const el = document.createElement("div");
+  el.className="toast"; el.textContent=text;
+  layer.appendChild(el);
+  setTimeout(()=>el.remove(),2600);
+}
+function showReward(emoji, title, text){
+  document.getElementById("reward-emoji").textContent = emoji;
+  document.getElementById("reward-title").textContent = title;
+  document.getElementById("reward-text").textContent = text;
+  const overlay = document.getElementById("rewardOverlay");
+  overlay.classList.add("show");
+  // petite pluie de confettis emoji en CSS
+  const emojis=["🎉","✨","🥐","⭐","🥖"];
+  for(let i=0;i<16;i++){
+    const conf = document.createElement("span");
+    conf.className="confetti"; conf.textContent = emojis[i%emojis.length];
+    conf.style.left = (10+Math.random()*80)+"%";
+    conf.style.animationDuration = (1.2+Math.random()*0.8)+"s";
+    conf.style.animationDelay = (Math.random()*0.3)+"s";
+    overlay.querySelector(".reward-card").appendChild(conf);
+    setTimeout(()=>conf.remove(),2200);
+  }
+}
+document.getElementById("reward-close").addEventListener("click", ()=>{
+  document.getElementById("rewardOverlay").classList.remove("show");
+});
+
+/* ============================================================
+   5bis. BOUTIQUE — catalogue + achats a effet reel
+   ============================================================ */
+function ovenCost(){ return 180 + state.ovens.length*140; }
+function checkoutCost(){ return 150 + state.checkouts.length*110; }
+function hireCost(role){ const n = state.staff.filter(s=>s.role===role).length; return Math.round(ROLE_DEFAULTS[role].salaryBase*4.5*Math.pow(1.55,n)); }
+function upgradeCost(emp){ return Math.round(emp.salary*3*Math.pow(1.3,emp.level-1)); }
+function decorCost(type){ const n = state.attractiveness; return type==="plant" ? 40+n*20 : 90+n*35; }
+
+function renderShopPanel(body, tab){
+  if(tab==="rayons"){
+    RECIPE_KEYS.forEach(key=>{
+      const r = RECIPES[key];
+      const card = document.createElement("div");
+      card.className="shop-item";
+      if(r.unlocked){
+        card.innerHTML = `<div class="icon-box">${r.icon}</div>
+          <div class="info"><div class="name">${r.name}</div><div class="desc">Prix de vente : ${r.price}€ · Stock : ${state.stock[key]}</div></div>
+          <button class="buybtn maxed" disabled>Débloqué</button>`;
+      } else {
+        card.innerHTML = `<div class="icon-box">${r.icon}</div>
+          <div class="info"><div class="name">${r.name}</div><div class="desc">Nouvelle recette à débloquer</div></div>
+          <button class="buybtn" ${state.money<r.unlockCost?"disabled":""}>${r.unlockCost}€</button>`;
+        card.querySelector("button").onclick=()=>{
+          if(state.money<r.unlockCost) return;
+          state.money-=r.unlockCost; r.unlocked=true;
+          toast(`${r.icon} ${r.name} débloquée !`);
+          playTone(700,0.12,"triangle");
+          refreshTop(); renderShopPanel(body,tab);
+        };
+      }
+      body.appendChild(card);
+    });
+  } else if(tab==="equipements"){
+    const ovenCard = document.createElement("div");
+    ovenCard.className="shop-item";
+    const oc = ovenCost();
+    const ovenMaxed = state.ovens.length>=OVEN_SLOT_POS.length;
+    ovenCard.innerHTML = `<div class="icon-box">🔥</div>
+      <div class="info"><div class="name">Nouveau four</div><div class="desc">Cuisson en parallèle (${state.ovens.length}/${OVEN_SLOT_POS.length})</div></div>
+      <button class="buybtn ${ovenMaxed?'maxed':''}" ${(ovenMaxed||state.money<oc)?"disabled":""}>${ovenMaxed?"MAX":oc+"€"}</button>`;
+    if(!ovenMaxed) ovenCard.querySelector("button").onclick=()=>{
+      if(state.money<oc) return;
+      state.money-=oc; addOven();
+      toast("🔥 Nouveau four installé !"); playTone(500,0.1,"triangle");
+      refreshTop(); renderShopPanel(body,tab);
+    };
+    body.appendChild(ovenCard);
+
+    const coCard = document.createElement("div");
+    coCard.className="shop-item";
+    const cc = checkoutCost();
+    const coMaxed = state.checkouts.length>=CHECKOUT_SLOT_POS.length;
+    coCard.innerHTML = `<div class="icon-box">💳</div>
+      <div class="info"><div class="name">Nouvelle caisse</div><div class="desc">Sert plus de clients en parallèle (${state.checkouts.length}/${CHECKOUT_SLOT_POS.length})</div></div>
+      <button class="buybtn ${coMaxed?'maxed':''}" ${(coMaxed||state.money<cc)?"disabled":""}>${coMaxed?"MAX":cc+"€"}</button>`;
+    if(!coMaxed) coCard.querySelector("button").onclick=()=>{
+      if(state.money<cc) return;
+      state.money-=cc; addCheckout();
+      toast("💳 Nouvelle caisse installée !"); playTone(500,0.1,"triangle");
+      refreshTop(); renderShopPanel(body,tab);
+    };
+    body.appendChild(coCard);
+  } else if(tab==="securite"){
+    const p=document.createElement("p");
+    p.className="emptystate";
+    p.textContent="🛡️ Embauche des vigiles depuis l'onglet Équipe pour dissuader les voleurs.";
+    body.appendChild(p);
+  }
+}
+
+function renderStaffPanel(body){
+  const t1=document.createElement("div"); t1.className="section-title"; t1.textContent="Recruter"; body.appendChild(t1);
+  Object.keys(ROLE_DEFAULTS).forEach(role=>{
+    const def = ROLE_DEFAULTS[role];
+    const count = state.staff.filter(s=>s.role===role).length;
+    const cost = hireCost(role);
+    const card=document.createElement("div"); card.className="shop-item";
+    card.innerHTML = `<div class="icon-box">${def.icon}</div>
+      <div class="info"><div class="name">${roleLabel(role)}</div><div class="desc">Vitesse ${def.speedBase.toFixed(1)} · Salaire ${def.salaryBase}€/jour</div>
+      <div class="sub">Embauchés : ${count}</div></div>
+      <button class="buybtn" ${state.money<cost?"disabled":""}>${cost}€</button>`;
+    card.querySelector("button").onclick=()=>{
+      if(state.money<cost) return;
+      state.money-=cost;
+      const emp = hireStaff(role);
+      if(role==="cashier") assignCheckout(emp);
+      toast(`${def.icon} ${roleLabel(role)} embauché !`); playTone(600,0.1,"triangle");
+      refreshTop(); renderStaffPanel(body);
+    };
+    body.appendChild(card);
+  });
+
+  const t2=document.createElement("div"); t2.className="section-title"; t2.textContent="Employés en poste"; body.appendChild(t2);
+  if(state.staff.length===0){
+    const p=document.createElement("p"); p.className="emptystate"; p.textContent="Aucun employé pour l'instant.";
+    body.appendChild(p);
+  }
+  state.staff.forEach(emp=>{
+    const cost = upgradeCost(emp);
+    const card=document.createElement("div"); card.className="shop-item";
+    card.innerHTML = `<div class="icon-box">${ROLE_DEFAULTS[emp.role].icon}</div>
+      <div class="info"><div class="name">${roleLabel(emp.role)} — Nv.${emp.level}</div>
+      <div class="staffline">
+        <span class="statchip">⚡ ${emp.speed.toFixed(1)}</span>
+        <span class="statchip">🎯 ${(emp.efficiency).toFixed(2)}</span>
+        <span class="statchip">💵 ${emp.salary}€/j</span>
+      </div></div>
+      <button class="buybtn" ${state.money<cost?"disabled":""}>${cost}€</button>`;
+    card.querySelector("button").onclick=()=>{
+      if(state.money<cost) return;
+      state.money-=cost; upgradeStaff(emp);
+      toast(`⬆️ ${roleLabel(emp.role)} amélioré !`); playTone(750,0.1,"triangle");
+      refreshTop(); renderStaffPanel(body);
+    };
+    body.appendChild(card);
+  });
+}
+function roleLabel(role){
+  return {baker:"Boulanger", seller:"Réassortisseur", cashier:"Caissier", guard:"Vigile"}[role];
+}
+
+function renderDecorPanel(body){
+  const t=document.createElement("div"); t.className="section-title"; t.textContent="Décorations"; body.appendChild(t);
+  const items = [
+    {icon:"🪴", name:"Plante", desc:"+2% de clients attirés", type:"plant"},
+    {icon:"🪑", name:"Table client", desc:"+2% de clients attirés", type:"table"},
+  ];
+  items.forEach(it=>{
+    const cost = decorCost(it.type);
+    const card=document.createElement("div"); card.className="shop-item";
+    card.innerHTML = `<div class="icon-box">${it.icon}</div>
+      <div class="info"><div class="name">${it.name}</div><div class="desc">${it.desc}</div></div>
+      <button class="buybtn" ${state.money<cost?"disabled":""}>${cost}€</button>`;
+    card.querySelector("button").onclick=()=>{
+      if(state.money<cost) return;
+      state.money-=cost; state.attractiveness++;
+      const x = 3.5+Math.random()*1.4, z = -1.6+Math.random()*3.4;
+      if(it.type==="plant") makePlant(x,z); else makeCafeTable(x,z);
+      toast(`${it.icon} ${it.name} ajoutée !`); playTone(600,0.1,"triangle");
+      refreshTop(); renderDecorPanel(body);
+    };
+    body.appendChild(card);
+  });
+}
+
+function renderFinancePanel(body){
+  const canvas = document.createElement("canvas");
+  canvas.id="financeChart"; canvas.width=320; canvas.height=130;
+  body.appendChild(canvas);
+  drawFinanceChart(canvas);
+
+  const t=document.createElement("div"); t.className="section-title"; t.textContent="Aujourd'hui"; body.appendChild(t);
+  const today=document.createElement("div"); today.className="shop-item";
+  today.innerHTML = `<div class="icon-box">📈</div><div class="info">
+    <div class="name">Revenus : ${Math.round(state.todayRevenue)}€</div>
+    <div class="desc">Dépenses (salaires estimés) : ${Math.round(estimatedDailyExpenses())}€</div></div>`;
+  body.appendChild(today);
+
+  const t2=document.createElement("div"); t2.className="section-title"; t2.textContent="Historique"; body.appendChild(t2);
+  if(state.history.length===0){
+    const p=document.createElement("p"); p.className="emptystate"; p.textContent="Pas encore d'historique — reviens demain !";
+    body.appendChild(p);
+  } else {
+    state.history.slice().reverse().forEach(h=>{
+      const row=document.createElement("div"); row.className="hist-row";
+      row.innerHTML = `<span>Jour ${h.day}</span><span>Revenus <b>${h.revenue}€</b></span><span>Profit <b style="color:${h.profit>=0?'#8fd19e':'#ff8b8b'}">${h.profit>=0?'+':''}${h.profit}€</b></span>`;
+      body.appendChild(row);
+    });
+  }
+
+  const t3=document.createElement("div"); t3.className="section-title"; t3.textContent="Sauvegarde"; body.appendChild(t3);
+  const saveBtn=document.createElement("button"); saveBtn.className="savebtn"; saveBtn.textContent="⬇️ Télécharger la sauvegarde";
+  saveBtn.onclick=exportSave;
+  body.appendChild(saveBtn);
+  const loadBtn=document.createElement("button"); loadBtn.className="savebtn"; loadBtn.style.background="linear-gradient(180deg,#ffcf6e,#d99a1b)"; loadBtn.style.boxShadow="0 3px 0 #a06f13"; loadBtn.textContent="⬆️ Charger une sauvegarde";
+  const fileInput=document.createElement("input"); fileInput.type="file"; fileInput.accept="application/json"; fileInput.style.display="none";
+  fileInput.onchange=(e)=>{ if(e.target.files[0]) importSave(e.target.files[0]); };
+  loadBtn.onclick=()=>fileInput.click();
+  body.appendChild(loadBtn); body.appendChild(fileInput);
+  const note=document.createElement("div"); note.className="savenote";
+  note.textContent = "La partie se garde automatiquement en mémoire tant que l'onglet reste ouvert. Pour la reprendre plus tard (ou dans Claude), télécharge le fichier de sauvegarde puis recharge-le ici.";
+  body.appendChild(note);
+}
+function estimatedDailyExpenses(){ return state.staff.reduce((s,e)=>s+e.salary,0); }
+function drawFinanceChart(canvas){
+  const ctx = canvas.getContext("2d");
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const days = state.history.slice(-7);
+  if(days.length===0){
+    ctx.fillStyle="#8fa2b3"; ctx.font="12px Fredoka"; ctx.textAlign="center";
+    ctx.fillText("Le graphique apparaîtra après ta première journée.", w/2, h/2);
+    return;
+  }
+  const maxAbs = Math.max(10, ...days.map(d=>Math.abs(d.profit)));
+  const barW = w/days.length;
+  const zeroY = h*0.55;
+  ctx.strokeStyle="rgba(255,255,255,0.15)"; ctx.beginPath(); ctx.moveTo(0,zeroY); ctx.lineTo(w,zeroY); ctx.stroke();
+  days.forEach((d,i)=>{
+    const bh = (Math.abs(d.profit)/maxAbs) * (h*0.4);
+    const x = i*barW + barW*0.2;
+    const bw = barW*0.6;
+    ctx.fillStyle = d.profit>=0 ? "#4caf6e" : "#e05a5a";
+    if(d.profit>=0) ctx.fillRect(x, zeroY-bh, bw, bh);
+    else ctx.fillRect(x, zeroY, bw, bh);
+    ctx.fillStyle="#cddaea"; ctx.font="10px Fredoka"; ctx.textAlign="center";
+    ctx.fillText("J"+d.day, x+bw/2, h-4);
+  });
+}
+
+/* ============================================================
+   PANNEAU LATERAL — routage des onglets
+   ============================================================ */
+const PANEL_DEFS = {
+  shop:{title:"Boutique", tabs:[["rayons","Recettes"],["equipements","Équipement"],["securite","Sécurité"]]},
+  staff:{title:"Équipe", tabs:[["team","Recrutement"]]},
+  finance:{title:"Finances", tabs:[["overview","Aperçu"]]},
+  decor:{title:"Décor", tabs:[["deco","Décorations"]]}
+};
+let currentPanel="shop", currentTab="rayons";
+function openPanel(name){
+  const def=PANEL_DEFS[name];
+  document.getElementById("panel-title").textContent=def.title;
+  currentPanel=name; currentTab=def.tabs[0][0];
+  renderTabs(); renderBody();
+  document.getElementById("sidepanel").classList.add("open");
+  document.getElementById("panel-backdrop").classList.add("show");
+  document.querySelectorAll(".qbtn").forEach(b=>b.classList.toggle("active", b.dataset.panel===name));
+}
+function closePanel(){
+  document.getElementById("sidepanel").classList.remove("open");
+  document.getElementById("panel-backdrop").classList.remove("show");
+  document.querySelectorAll(".qbtn").forEach(b=>b.classList.remove("active"));
+}
+function renderTabs(){
+  const def=PANEL_DEFS[currentPanel];
+  const wrap=document.getElementById("panel-tabs"); wrap.innerHTML="";
+  def.tabs.forEach(([key,label])=>{
+    const el=document.createElement("div");
+    el.className="tab"+(currentTab===key?" active":"");
+    el.textContent=label;
+    el.onclick=()=>{ currentTab=key; renderTabs(); renderBody(); };
+    wrap.appendChild(el);
+  });
+}
+function renderBody(){
+  const body=document.getElementById("panel-body"); body.innerHTML="";
+  if(currentPanel==="shop") renderShopPanel(body,currentTab);
+  else if(currentPanel==="staff") renderStaffPanel(body);
+  else if(currentPanel==="finance") renderFinancePanel(body);
+  else if(currentPanel==="decor") renderDecorPanel(body);
+}
+document.querySelectorAll(".qbtn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const name=btn.dataset.panel;
+    if(document.getElementById("sidepanel").classList.contains("open") && currentPanel===name) closePanel();
+    else openPanel(name);
+  });
+});
+document.getElementById("panel-close").addEventListener("click", closePanel);
+document.getElementById("panel-backdrop").addEventListener("click", closePanel);
+
+/* ============================================================
+   8. SAUVEGARDE — memoire + export/import JSON
+   (localStorage volontairement evite : bloque dans l'apercu Claude.
+    Pour un hebergement perso, remplace exportSave/importSave par
+    localStorage.setItem('tikowiko-save', JSON.stringify(data)) /
+    JSON.parse(localStorage.getItem('tikowiko-save')).)
+   ============================================================ */
+function serializeState(){
+  return {
+    money:state.money, day:state.day, minutes:state.minutes, xp:state.xp, level:state.level,
+    history:state.history, stock:state.stock, attractiveness:state.attractiveness,
+    ovensCount:state.ovens.length, checkoutsCount:state.checkouts.length,
+    recipes: Object.fromEntries(RECIPE_KEYS.map(k=>[k,RECIPES[k].unlocked])),
+    staff: state.staff.map(e=>({role:e.role, speed:e.speed, efficiency:e.efficiency, level:e.level, salary:e.salary})),
+  };
+}
+function exportSave(){
+  const data = JSON.stringify(serializeState(), null, 2);
+  const blob = new Blob([data], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download=`tikowiko-save-jour${state.day}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("💾 Sauvegarde téléchargée !");
+}
+function importSave(file){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      applySave(data);
+      toast("✅ Sauvegarde chargée !");
+      renderBody();
+    }catch(err){
+      toast("❌ Fichier de sauvegarde invalide");
+    }
+  };
+  reader.readAsText(file);
+}
+function applySave(data){
+  state.money=data.money??state.money; state.day=data.day??state.day;
+  state.minutes=data.minutes??state.minutes; state.xp=data.xp??state.xp; state.level=data.level??state.level;
+  state.history=data.history??[]; state.stock=data.stock??state.stock;
+  state.attractiveness=data.attractiveness??0;
+  if(data.recipes) RECIPE_KEYS.forEach(k=>{ if(data.recipes[k]) RECIPES[k].unlocked=true; });
+  while(state.ovens.length < (data.ovensCount||1)) addOven();
+  while(state.checkouts.length < (data.checkoutsCount||1)) addCheckout();
+  if(data.staff){
+    data.staff.forEach(s=>{
+      const emp = hireStaff(s.role);
+      emp.speed=s.speed; emp.efficiency=s.efficiency; emp.level=s.level; emp.salary=s.salary;
+      if(s.role==="cashier") assignCheckout(emp);
+    });
+  }
+  refreshTop(); refreshGoalUI();
+}
+// Sauvegarde automatique en memoire (pas de disque) toutes les 20s, comme filet de securite
+let memoryCheckpoint = null;
+setInterval(()=>{ memoryCheckpoint = serializeState(); }, 20000);
+
+/* ============================================================
+   BOUCLE PRINCIPALE
+   ============================================================ */
+function refreshTop(){
+  document.getElementById("stat-money").textContent = Math.floor(state.money)+"€";
+  document.getElementById("stat-staff").textContent = state.staff.length;
+  document.getElementById("stat-clients").textContent = state.customers.length;
+  document.getElementById("stat-level").textContent = state.level;
+  document.getElementById("xp-fill").style.width = (state.xp/(50*state.level)*100)+"%";
+  const h=Math.floor(state.minutes/60)%24, m=Math.floor(state.minutes%60);
+  document.getElementById("stat-day").textContent = "Jour "+state.day;
+  document.getElementById("stat-time").textContent = String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+}
+function rolloverDay(){
+  const expenses = Math.round(estimatedDailyExpenses());
+  state.money -= expenses;
+  state.todayExpenses = expenses;
+  const profit = Math.round(state.todayRevenue - expenses);
+  state.history.push({day:state.day, revenue:Math.round(state.todayRevenue), expenses, profit});
+  if(state.history.length>14) state.history.shift();
+  toast(`🌙 Fin de journée : profit ${profit>=0?'+':''}${profit}€`);
+  state.day++; state.minutes=8*60; state.todayRevenue=0; state.todayExpenses=0; state.soldToday=0;
+  newDailyGoal();
+  refreshTop();
+}
+
+let spawnTimer = 0;
+let lastFrame = performance.now();
+function gameTick(dt){
+  // horloge
+  state.minutes += dt*10;
+  if(state.minutes >= 20*60) rolloverDay();
+  updateDynamicLight(state.minutes);
+
+  // spawn clients (plus frequent pendant le rush ou aux heures de pointe)
+  spawnTimer -= dt;
+  const hour = state.minutes/60;
+  const rushHour = (hour>=12 && hour<14) ? 1.5 : 1;
+  const eventMult = (state.eventActive && state.eventActive.type==="rush") ? 2 : 1;
+  const attractMult = 1 + state.attractiveness*0.02;
+  if(spawnTimer<=0){
+    if(state.customers.length < 8+state.level) spawnCustomer();
+    spawnTimer = (2.6/(rushHour*eventMult*attractMult)) + Math.random()*1.4;
+  }
+  maybeTriggerEvent(dt);
+
+  // IA employes
+  state.staff.forEach(emp=>{
+    if(emp.role==="baker") updateBaker(emp,dt);
+    else if(emp.role==="seller") updateSeller(emp,dt);
+    else if(emp.role==="cashier") updateCashier(emp,dt);
+    else if(emp.role==="guard") updateGuard(emp,dt);
+  });
+  updateOvens(dt);
+
+  // clients
+  state.customers.slice().forEach(c=>updateCustomer(c,dt));
+
+  // petit "dandinement" des personnages en mouvement
+  const t = performance.now()/1000;
+  [...state.staff.map(e=>e.visual), ...state.customers.map(c=>c.visual)].forEach(v=>{
+    const b = v.userData.bob;
+    v.position.y = Math.abs(Math.sin(t*2.4+b))*0.05;
+  });
+
+  refreshTop();
+}
+
+let tprev = performance.now();
+function animate(now){
+  const dt = Math.min(0.05,(now-tprev)/1000); tprev = now;
+  const t = now/1000;
+  gameTick(dt);
+  gameLoopHooks.forEach(fn=>fn(t));
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+function onResize(){
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+}
+addEventListener("resize", onResize);
+onResize();
+
+/* ============================================================
+   INITIALISATION DE LA PARTIE
+   ============================================================ */
+function initGame(){
+  addOven();
+  addCheckout();
+  const b = hireStaff("baker");
+  const s = hireStaff("seller");
+  const c = hireStaff("cashier");
+  assignCheckout(c);
+  newDailyGoal();
+  refreshTop();
+}
+initGame();
+
+requestAnimationFrame((t)=>{
+  tprev=t;
+  document.getElementById("loading").style.opacity="0";
+  setTimeout(()=>document.getElementById("loading")?.remove(),450);
+  animate(t);
+});
+</script>
+</body>
+</html>
