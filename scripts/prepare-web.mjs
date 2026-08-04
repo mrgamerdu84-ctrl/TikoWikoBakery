@@ -1,26 +1,19 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 
-const sourcePath = 'tiko-wiko-diorama-3d.html';
-const targetPath = 'index.html';
-const selfServicePath = 'scripts/self-service-display.js';
+let html = await readFile('tiko-wiko-diorama-3d.html', 'utf8');
+html = html.replace(/<script\s+type=["']importmap["']>[\s\S]*?<\/script>\s*/i, '');
 
-let html = await readFile(sourcePath, 'utf8');
+const additions = await Promise.all([
+  'scripts/self-service-display.js',
+  'scripts/premium-bakery-theme.js'
+].map(path => readFile(path, 'utf8')));
 
-// Vite bundles the bare Three.js imports from node_modules, so the CDN import map
-// is removed from the generated entry page. This keeps the APK functional offline.
-html = html.replace(
-  /<script\s+type=["']importmap["']>[\s\S]*?<\/script>\s*/i,
-  ''
-);
-
-// Add the stocked self-service displays inside the existing Three.js module so
-// the injected feature can reuse the scene, recipes, stock and customer AI.
-const selfServiceCode = await readFile(selfServicePath, 'utf8');
 const moduleEnd = html.lastIndexOf('</script>');
-if (moduleEnd < 0) {
-  throw new Error('Unable to find the closing module script in the game HTML.');
-}
-html = `${html.slice(0, moduleEnd)}\n\n${selfServiceCode}\n${html.slice(moduleEnd)}`;
+if (moduleEnd < 0) throw new Error('Closing module script not found.');
+html = `${html.slice(0, moduleEnd)}\n${additions.join('\n')}\n${html.slice(moduleEnd)}`;
 
-await writeFile(targetPath, html, 'utf8');
-console.log(`Prepared ${targetPath} from ${sourcePath} with self-service displays`);
+await rm('public/assets', { recursive: true, force: true });
+await mkdir('public', { recursive: true });
+await cp('assets', 'public/assets', { recursive: true, force: true });
+await writeFile('index.html', html, 'utf8');
+console.log('Prepared TikoWikoBakery premium build');
