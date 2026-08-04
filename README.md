@@ -11,3 +11,5 @@ Jeu mobile de gestion de boulangerie 3D créé par **tikowikoFamily**.
 - poutres, lampes, coin café, table et ventilateur animé ;
 - optimisation de la qualité graphique sur mobile ;
 - génération automatique de l’APK par GitHub Actions.
+
+Le workflow Android fabrique automatiquement l’APK de test à chaque mise à jour de la branche `main`.
