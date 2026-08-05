@@ -39,8 +39,28 @@ jobs:
           fi
           npx cap sync android
 
-      - name: Generate Android icon and splash screen
+      - name: Generate supplied Android icon and splash screen
         run: npm run android:assets
+
+      - name: Force portrait mobile mode
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          text = manifest.read_text(encoding="utf-8")
+          if 'android:screenOrientation=' not in text:
+              text = re.sub(
+                  r'(<activity\b[^>]*android:name="\.MainActivity")',
+                  r'\1 android:screenOrientation="portrait"',
+                  text,
+                  count=1,
+                  flags=re.S,
+              )
+          manifest.write_text(text, encoding="utf-8")
+          print("Android portrait mode enabled")
+          PY
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -49,12 +69,12 @@ jobs:
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TikoWiko-Bakery-debug-apk
+          name: TikoWiko-Bakery-mobile-v1.2
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
