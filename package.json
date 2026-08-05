@@ -1,7 +1,7 @@
 {
   "name": "tikowiko-bakery",
-  "version": "1.2.0",
-  "description": "TikoWiko Bakery - jeu de gestion de boulangerie en 3D",
+  "version": "2.0.0",
+  "description": "TikoWiko Bakery - jeu mobile de gestion de boulangerie en 3D",
   "author": "tikowikoFamily",
   "private": true,
   "license": "MIT",
