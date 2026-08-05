@@ -20,6 +20,11 @@ jobs:
         with:
           node-version: 20
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -27,7 +32,12 @@ jobs:
           java-version: 21
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          python -m pip install --disable-pip-version-check pillow
+
+      - name: Restore supplied icon and splash
+        run: python scripts/restore_supplied_assets.py
 
       - name: Build web application
         run: npm run build
@@ -39,8 +49,10 @@ jobs:
           fi
           npx cap sync android
 
-      - name: Generate supplied Android icon and splash screen
-        run: npm run android:assets
+      - name: Generate exact Android icon and splash screen
+        run: |
+          rm -f assets/icon-only.svg assets/splash.svg
+          npm run android:assets
 
       - name: Force portrait mobile mode
         run: |
@@ -74,7 +86,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TikoWiko-Bakery-mobile-v1.2
+          name: TikoWiko-Bakery-mobile-v1.3
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
