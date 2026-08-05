@@ -1,6 +1,6 @@
 {
   "name": "tikowiko-bakery",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "TikoWiko Bakery - jeu de gestion de boulangerie en 3D",
   "author": "tikowikoFamily",
   "private": true,
@@ -11,7 +11,7 @@
     "build": "npm run prepare:web && vite build",
     "android:add": "cap add android",
     "android:sync": "cap sync android",
-    "android:assets": "capacitor-assets generate --android --assetPath assets"
+    "android:assets": "capacitor-assets generate --android --assetPath assets --iconBackgroundColor '#d3841a' --splashBackgroundColor '#2b160b'"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
