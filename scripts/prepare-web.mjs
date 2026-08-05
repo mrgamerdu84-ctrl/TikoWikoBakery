@@ -5,7 +5,8 @@ html = html.replace(/<script\s+type=["']importmap["']>[\s\S]*?<\/script>\s*/i, '
 
 const additions = await Promise.all([
   'scripts/self-service-display.js',
-  'scripts/premium-bakery-theme.js'
+  'scripts/premium-bakery-theme.js',
+  'scripts/mobile-fixes.js'
 ].map(path => readFile(path, 'utf8')));
 
 const moduleEnd = html.lastIndexOf('</script>');
@@ -16,4 +17,4 @@ await rm('public/assets', { recursive: true, force: true });
 await mkdir('public', { recursive: true });
 await cp('assets', 'public/assets', { recursive: true, force: true });
 await writeFile('index.html', html, 'utf8');
-console.log('Prepared TikoWikoBakery premium build');
+console.log('Prepared TikoWikoBakery mobile build with supplied icon and splash');
