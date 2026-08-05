@@ -1,8 +1,10 @@
 /* TikoWikoBakery — correctifs mobiles et vrais visuels fournis. */
 (() => {
   const asset = name => new URL(`./assets/${name}`, import.meta.url).href;
-  const iconUrl = asset('icon-only.svg');
-  const splashUrl = asset('splash.svg');
+  const iconUrl = asset('icon-only.jpg');
+  const iconFallback = asset('icon-only.svg');
+  const splashUrl = asset('splash-web.jpg');
+  const splashFallback = asset('splash.svg');
 
   const style = document.createElement('style');
   style.textContent = `
@@ -82,11 +84,14 @@
   document.head.appendChild(style);
 
   const logo = document.querySelector('.tw-logo');
-  if (logo) logo.src = iconUrl;
+  if (logo) {
+    logo.onerror = () => { logo.onerror = null; logo.src = iconFallback; };
+    logo.src = iconUrl;
+  }
 
   const splash = document.getElementById('twSplash');
   if (splash) {
-    splash.style.backgroundImage = `url("${splashUrl}")`;
+    splash.style.backgroundImage = `url("${splashUrl}"), url("${splashFallback}")`;
     const play = splash.querySelector('#twPlay');
     const fill = splash.querySelector('#twBar i');
     const label = splash.querySelector('#twLoad span');
