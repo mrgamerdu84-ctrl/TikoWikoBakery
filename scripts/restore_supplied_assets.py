@@ -4,7 +4,9 @@ import base64
 import io
 from pathlib import Path
 
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+from PIL import Image, ImageEnhance, ImageFile, ImageFilter, ImageOps
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "assets-source"
