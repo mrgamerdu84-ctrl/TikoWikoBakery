@@ -23,8 +23,8 @@ def main() -> None:
     icon_path = ASSETS / "icon-only.jpg"
     splash_web_path = ASSETS / "splash-web.jpg"
 
-    decode_parts("final-icon-*.b64", icon_path)
-    decode_parts("final-splash-*.b64", splash_web_path)
+    decode_parts("v2-icon-*.b64", icon_path)
+    decode_parts("v3-splash-*.b64", splash_web_path)
 
     with Image.open(icon_path) as icon:
         icon.verify()
