@@ -36,8 +36,8 @@ jobs:
           npm install
           python -m pip install --disable-pip-version-check pillow
 
-      - name: Restore supplied icon and splash
-        run: python scripts/restore_supplied_assets.py
+      - name: Prepare supplied icon and splash
+        run: python scripts/prepare_android_assets.py
 
       - name: Build web application
         run: npm run build
@@ -86,7 +86,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TikoWiko-Bakery-mobile-v1.3
+          name: TikoWiko-Bakery-refonte-3D-v2.0
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
