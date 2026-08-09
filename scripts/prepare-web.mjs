@@ -7,7 +7,8 @@ const additions = await Promise.all([
   'scripts/self-service-display.js',
   'scripts/premium-bakery-theme.js',
   'scripts/mobile-fixes.js',
-  'scripts/character-overhaul.js'
+  'scripts/character-overhaul.js',
+  'scripts/service-dining-overhaul.js'
 ].map(path => readFile(path, 'utf8')));
 
 const moduleEnd = html.lastIndexOf('</script>');
@@ -18,4 +19,4 @@ await rm('public/assets', { recursive: true, force: true });
 await mkdir('public', { recursive: true });
 await cp('assets', 'public/assets', { recursive: true, force: true });
 await writeFile('index.html', html, 'utf8');
-console.log('Prepared TikoWikoBakery full 3D character refonte');
+console.log('Prepared TikoWikoBakery 2.1 with collisions, visible service and dining room');
