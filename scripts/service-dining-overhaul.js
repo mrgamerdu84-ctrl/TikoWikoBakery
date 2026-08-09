@@ -9,37 +9,33 @@
   };
 
   // ---------------------------------------------------------------------------
-  // 1) Salle plus grande pour créer une vraie zone repas.
+  // 1) Salle plus grande, en gardant le fournil et les étagères à leur place.
+  //    L'extension se fait surtout vers l'avant et sur la droite/gauche.
   // ---------------------------------------------------------------------------
   floor.geometry.dispose();
   floor.geometry = new THREE.PlaneGeometry(14, 11);
+  floor.position.z = 1.2;
+
   woodFloor.geometry.dispose();
-  woodFloor.geometry = new THREE.PlaneGeometry(14, 2.3);
-  woodFloor.position.z = -4.35;
+  woodFloor.geometry = new THREE.PlaneGeometry(14, 2.2);
+  woodFloor.position.z = -3.2;
 
   backWall.geometry.dispose();
   backWall.geometry = new THREE.BoxGeometry(14, 4.4, 0.25);
-  backWall.position.z = -5.5;
+  backWall.position.z = -4.3;
+
   sideWall.geometry.dispose();
   sideWall.geometry = new THREE.BoxGeometry(0.25, 4.4, 11);
-  sideWall.position.x = -7;
+  sideWall.position.set(-7, 2.2, 1.2);
 
-  sign.position.z = -5.37;
-  camera.position.set(11.1, 10.2, 13.2);
-  controls.target.set(0.2, 1.25, 0.15);
-  controls.minDistance = 8.2;
-  controls.maxDistance = 23;
+  camera.position.set(11.6, 10.4, 14.1);
+  controls.target.set(0.1, 1.25, 0.6);
+  controls.minDistance = 8.4;
+  controls.maxDistance = 24;
   controls.update();
 
-  // Recule légèrement les éléments du fournil pour laisser un couloir de service.
-  state.ovens.forEach(o => {
-    o.z -= 0.8;
-    if (o.visual?.group) o.visual.group.position.z = o.z;
-  });
-  mixer.position.z -= 0.9;
-
   // ---------------------------------------------------------------------------
-  // 2) Tables/chaises + décor du coin repas.
+  // 2) Tables/chaises + tableaux de chefs pour la zone repas.
   // ---------------------------------------------------------------------------
   const diningTables = [];
 
@@ -74,35 +70,33 @@
     const base = mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.05, 16), mat(0x3f291b, 0.7));
     base.position.y = 0.03;
     g.add(base);
-
     const napkin = mesh(new THREE.BoxGeometry(0.34, 0.015, 0.34), mat(0xf7e8cf, 0.82), false);
     napkin.position.set(0.12, 0.835, 0.05);
     napkin.rotation.y = 0.35;
     g.add(napkin);
-
     g.position.set(x, 0, z);
     scene.add(g);
 
-    const chairA = makeChair(x, z + 1.02, Math.PI);
-    const chairB = makeChair(x, z - 1.02, 0);
+    const chairA = makeChair(x, z + 1.05, Math.PI);
+    const chairB = makeChair(x, z - 1.05, 0);
     const table = {
       id: index,
       group: g,
       x, z,
       chairs: [chairA, chairB],
       seats: [
-        { x, z: z + 0.88, rot: Math.PI, occupiedBy: null },
-        { x, z: z - 0.88, rot: 0, occupiedBy: null }
+        { x, z: z + 1.02, rot: Math.PI, occupiedBy: null },
+        { x, z: z - 1.02, rot: 0, occupiedBy: null }
       ]
     };
     diningTables.push(table);
     return table;
   }
 
-  makeDiningTable(-4.9, 2.8, 0);
-  makeDiningTable(-2.9, 3.15, 1);
-  makeDiningTable(-5.0, 0.35, 2);
-  makeDiningTable(-2.75, 0.45, 3);
+  makeDiningTable(-4.85, 3.05, 0);
+  makeDiningTable(-2.75, 3.30, 1);
+  makeDiningTable(-4.95, 0.45, 2);
+  makeDiningTable(-2.75, 0.55, 3);
 
   function makeWallPicture(x, y, title, color) {
     const canvas = document.createElement('canvas');
@@ -125,10 +119,10 @@
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
     const frame = mesh(new THREE.BoxGeometry(1.45, 1.02, 0.08), mat(0x6f431f, 0.62));
-    frame.position.set(x, y, -5.34);
+    frame.position.set(x, y, -4.16);
     scene.add(frame);
     const picture = new THREE.Mesh(new THREE.PlaneGeometry(1.28, 0.86), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.78 }));
-    picture.position.set(x, y, -5.295);
+    picture.position.set(x, y, -4.105);
     scene.add(picture);
   }
 
@@ -136,20 +130,22 @@
   makeWallPicture(-2.9, 2.75, 'Pain maison', '#c46c43');
 
   // ---------------------------------------------------------------------------
-  // 3) Collisions / navigation : aucun PNJ ne doit traverser le mobilier.
+  // 3) Collisions / navigation : les PNJ ne traversent plus le mobilier.
   // ---------------------------------------------------------------------------
   const obstacleRects = [];
-  const addObstacle = (name, x, z, halfX, halfZ, margin = 0.30) => obstacleRects.push({ name, x, z, halfX, halfZ, margin });
+  const addObstacle = (name, x, z, halfX, halfZ, margin = 0.24) => obstacleRects.push({ name, x, z, halfX, halfZ, margin });
 
-  addObstacle('comptoir', -0.6, 1.6, 2.2, 0.475, 0.34);
-  addObstacle('vitrine', 3.2, -1.2, 0.75, 0.38, 0.30);
-  addObstacle('atelier', MIXER_POS.x, MIXER_POS.z, 0.85, 0.55, 0.34);
-  state.ovens.forEach((o, i) => addObstacle(`four-${i}`, o.x, o.z, 1.02, 0.92, 0.38));
-  state.checkouts.forEach((co, i) => addObstacle(`caisse-${i}`, co.x, co.z, 0.58, 0.76, 0.30));
-  diningTables.forEach((t, i) => addObstacle(`table-${i}`, t.x, t.z, 0.76, 0.76, 0.36));
+  addObstacle('comptoir', -0.6, 1.6, 2.2, 0.475, 0.24);
+  addObstacle('vitrine', 3.2, -1.2, 0.75, 0.38, 0.20);
+  // Marges réduites pour permettre au boulanger de travailler juste devant les machines.
+  addObstacle('atelier', MIXER_POS.x, MIXER_POS.z, 0.73, 0.25, 0.00);
+  state.ovens.forEach((o, i) => addObstacle(`four-${i}`, o.x, o.z, 1.00, 0.83, 0.00));
+  state.checkouts.forEach((co, i) => addObstacle(`caisse-${i}`, co.x, co.z, 0.52, 0.66, 0.18));
+  diningTables.forEach((t, i) => addObstacle(`table-${i}`, t.x, t.z, 0.70, 0.70, 0.18));
 
   function isBlocked(x, z, radius = 0.22, ignoreName = null) {
-    if (x < -6.55 + radius || x > 6.55 - radius || z < -5.15 + radius || z > 5.15 - radius) return true;
+    // Limites de la nouvelle salle : fond -4.3, devant +6.7.
+    if (x < -6.58 + radius || x > 6.58 - radius || z < -4.03 + radius || z > 6.42 - radius) return true;
     for (const o of obstacleRects) {
       if (ignoreName && o.name === ignoreName) continue;
       const hx = o.halfX + o.margin + radius;
@@ -174,7 +170,6 @@
       obj.position.x = nx;
       obj.position.z = nz;
     } else {
-      // Deux essais de glissement le long des obstacles, puis un petit détour latéral.
       const tryX = obj.position.x + (dx / dist) * step;
       const tryZ = obj.position.z + (dz / dist) * step;
       if (!isBlocked(tryX, obj.position.z, radius, ignoreName)) {
@@ -183,8 +178,8 @@
         obj.position.z = tryZ;
       } else {
         const side = obj.userData.navSide ?? (obj.userData.navSide = Math.random() < 0.5 ? -1 : 1);
-        const sx = obj.position.x + side * (-dz / dist) * step * 1.25;
-        const sz = obj.position.z + side * (dx / dist) * step * 1.25;
+        const sx = obj.position.x + side * (-dz / dist) * step * 1.35;
+        const sz = obj.position.z + side * (dx / dist) * step * 1.35;
         if (!isBlocked(sx, sz, radius, ignoreName)) {
           obj.position.x = sx;
           obj.position.z = sz;
@@ -201,7 +196,7 @@
   moveTowards = safeMove;
 
   // ---------------------------------------------------------------------------
-  // 4) Produits 3D visibles dans la main du serveur puis du client.
+  // 4) Produits 3D clairement visibles dans les mains.
   // ---------------------------------------------------------------------------
   function makeProduct3D(recipe) {
     const g = new THREE.Group();
@@ -219,7 +214,7 @@
       p.scale.set(1, 0.76, 1);
       g.add(p);
     }
-    g.scale.setScalar(1.18);
+    g.scale.setScalar(1.25);
     return g;
   }
 
@@ -246,27 +241,25 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 5) Service complet : commande -> serveur -> produit en main -> client -> paiement.
+  // 5) Service complet : commande -> serveur -> produit -> client -> paiement.
   // ---------------------------------------------------------------------------
   const pendingOrders = [];
   const serviceSpots = [
-    { x: -1.75, z: 2.62 },
-    { x: -0.65, z: 2.62 },
-    { x: 0.45, z: 2.62 },
-    { x: 1.45, z: 2.62 }
+    { x: -1.75, z: 2.75 },
+    { x: -0.65, z: 2.75 },
+    { x: 0.45, z: 2.75 },
+    { x: 1.45, z: 2.75 }
   ];
-  const serverPickup = { x: 1.95, z: 0.80 };
-  const serverExit = { x: 2.35, z: 2.75 };
+  // Le serveur prend les produits à l'extrémité du comptoir sans le traverser.
+  const serverPickup = { x: 2.28, z: 0.92 };
+  const serverExit = { x: 2.42, z: 2.82 };
+  const checkoutPose = (co, index) => ({ x: co.x - 0.82 - Math.max(0, index) * 0.50, z: co.z });
 
   function reserveServiceSpot(customer) {
     const used = new Set(state.customers.filter(c => c !== customer && c.serviceSpotIndex != null && c.state !== 'leaving').map(c => c.serviceSpotIndex));
     const idx = serviceSpots.findIndex((_, i) => !used.has(i));
     customer.serviceSpotIndex = idx >= 0 ? idx : customer.id % serviceSpots.length;
     return serviceSpots[customer.serviceSpotIndex];
-  }
-
-  function getFreeServer() {
-    return state.staff.find(e => e.role === 'seller' && !e.serviceOrder);
   }
 
   function createOrder(customer) {
@@ -282,17 +275,69 @@
     const idx = pendingOrders.indexOf(order);
     if (idx >= 0) pendingOrders.splice(idx, 1);
     if (order.server) order.server.serviceOrder = null;
-    order.customer.order = null;
+    if (order.customer) order.customer.order = null;
+  }
+
+  // Le serveur continue aussi à récupérer les fournées terminées pour alimenter le stock.
+  function startRestock(emp) {
+    if (emp.restockOven) return true;
+    const oven = state.ovens.find(o => o.state === 'ready' && o.claimedBy == null);
+    if (!oven) return false;
+    oven.claimedBy = emp.id;
+    emp.restockOven = oven;
+    emp.state = 'restockToOven';
+    return true;
+  }
+
+  function updateRestock(emp, dt) {
+    const oven = emp.restockOven;
+    if (!oven) return false;
+    if (emp.state === 'restockToOven') {
+      emp.visual.userData.action = 'walk';
+      if (safeMove(emp.visual, oven.x, oven.z + 1.12, emp.speed, dt)) {
+        const batch = 3 + Math.floor(emp.efficiency);
+        emp.restockBatch = { recipe: oven.recipe, qty: batch };
+        oven.state = 'idle';
+        oven.progress = 0;
+        oven.recipe = null;
+        oven.claimedBy = null;
+        attachHeld(emp, emp.restockBatch.recipe);
+        setBubble(emp.visual, RECIPES[emp.restockBatch.recipe].icon);
+        emp.state = 'restockCounter';
+      }
+      return true;
+    }
+    if (emp.state === 'restockCounter') {
+      emp.visual.userData.action = 'carry';
+      if (safeMove(emp.visual, serverPickup.x, serverPickup.z, emp.speed, dt)) {
+        state.stock[emp.restockBatch.recipe] += emp.restockBatch.qty;
+        clearHeld(emp);
+        setBubble(emp.visual, null);
+        emp.restockBatch = null;
+        emp.restockOven = null;
+        emp.state = 'idle';
+      }
+      return true;
+    }
+    return false;
   }
 
   updateSeller = function(emp, dt) {
+    if (updateRestock(emp, dt)) return;
+
     let order = emp.serviceOrder;
     if (!order) {
-      order = pendingOrders.find(o => !o.server && o.state === 'waitingServer');
+      // Si une commande attend mais que le stock est vide, priorité à une fournée prête.
+      const waiting = pendingOrders.find(o => !o.server && o.state === 'waitingServer');
+      if (waiting && state.stock[waiting.recipe] <= 0 && startRestock(emp)) return;
+
+      order = pendingOrders.find(o => !o.server && o.state === 'waitingServer' && state.stock[o.recipe] > 0);
       if (order) {
         order.server = emp;
         emp.serviceOrder = order;
         emp.state = 'servicePickup';
+      } else if (startRestock(emp)) {
+        return;
       } else {
         safeMove(emp.visual, REST_SPOT.x, REST_SPOT.z, emp.speed * 0.72, dt);
         emp.visual.userData.action = 'idle';
@@ -311,10 +356,8 @@
       emp.visual.userData.action = 'walk';
       if (safeMove(emp.visual, serverPickup.x, serverPickup.z, emp.speed, dt)) {
         if (state.stock[order.recipe] <= 0) {
-          setBubble(order.customer.visual, '😞');
-          order.customer.state = 'leaving';
-          state.missedSales++;
-          finishOrder(order);
+          order.server = null;
+          emp.serviceOrder = null;
           emp.state = 'idle';
           return;
         }
@@ -335,13 +378,13 @@
     if (emp.state === 'serviceDeliver') {
       const c = order.customer;
       const spot = c.serviceSpotIndex != null ? serviceSpots[c.serviceSpotIndex] : reserveServiceSpot(c);
-      const tx = spot.x + 0.55;
-      const tz = spot.z - 0.10;
+      const tx = spot.x + 0.52;
+      const tz = spot.z - 0.02;
       emp.visual.userData.action = 'carry';
       if (safeMove(emp.visual, tx, tz, emp.speed, dt)) {
         emp.visual.rotation.y = Math.atan2(c.visual.position.x - emp.visual.position.x, c.visual.position.z - emp.visual.position.z);
         emp.state = 'serviceHandoff';
-        order.wait = 0.48;
+        order.wait = 0.55;
       }
       return;
     }
@@ -377,6 +420,7 @@
         seat.occupiedBy = customer.id;
         customer.diningSeat = seat;
         customer.diningTable = table;
+        customer.diningApproach = { x: seat.x + 1.35, z: seat.z };
         return seat;
       }
     }
@@ -387,6 +431,7 @@
     if (customer?.diningSeat) customer.diningSeat.occupiedBy = null;
     customer.diningSeat = null;
     customer.diningTable = null;
+    customer.diningApproach = null;
   }
 
   const originalRemoveCustomer = removeCustomer;
@@ -422,6 +467,11 @@
       case 'receivedProduct':
         c.waitT -= dt;
         if (c.waitT <= 0) {
+          if (c.isThief) {
+            attemptDetection(c);
+            c.state = 'fleeing';
+            break;
+          }
           const co = chooseCheckout(c);
           if (!co) {
             clearHeld(c);
@@ -436,7 +486,7 @@
       case 'toCheckout': {
         const qi = c.checkout.queue.indexOf(c);
         if (qi < 0) { c.state = 'leaving'; break; }
-        const target = checkoutClientPose(c.checkout, qi);
+        const target = checkoutPose(c.checkout, qi);
         if (safeMove(c.visual, target.x, target.z, 1.45, dt)) {
           c.visual.rotation.y = Math.PI / 2;
           c.state = 'waitingPayment';
@@ -447,11 +497,11 @@
         const qi = c.checkout.queue.indexOf(c);
         if (qi < 0) {
           c.state = 'afterPayment';
-          c.waitT = 0.45;
+          c.waitT = 0.55;
           attachHeld(c, null, 'card');
           break;
         }
-        const target = checkoutClientPose(c.checkout, qi);
+        const target = checkoutPose(c.checkout, qi);
         safeMove(c.visual, target.x, target.z, 1.35, dt);
         break;
       }
@@ -462,7 +512,7 @@
           if (!c.isThief && Math.random() < 0.62) {
             const seat = findDiningSeat(c);
             if (seat) {
-              c.state = 'toDining';
+              c.state = 'toDiningApproach';
               c.eatT = 5.5 + Math.random() * 4;
               setBubble(c.visual, '🍽️');
               break;
@@ -472,10 +522,15 @@
           c.state = 'leaving';
         }
         break;
+      case 'toDiningApproach': {
+        if (!c.diningApproach || !c.diningTable) { c.state = 'leaving'; break; }
+        if (safeMove(c.visual, c.diningApproach.x, c.diningApproach.z, 1.3, dt)) c.state = 'toDining';
+        break;
+      }
       case 'toDining': {
         const seat = c.diningSeat;
-        if (!seat) { c.state = 'leaving'; break; }
-        if (safeMove(c.visual, seat.x, seat.z, 1.3, dt, `table-${c.diningTable.id}`)) {
+        if (!seat || !c.diningTable) { c.state = 'leaving'; break; }
+        if (safeMove(c.visual, seat.x, seat.z, 1.15, dt, `table-${c.diningTable.id}`)) {
           c.visual.rotation.y = seat.rot;
           c.state = 'eating';
           c.visual.userData.action = 'eat';
@@ -503,19 +558,19 @@
     }
   };
 
-  // Paiement : le client n'est retiré de la file qu'après encaissement visible.
+  // Le paiement reste comptabilisé par la logique existante, mais devient visible.
   const baseCompleteSale = completeSale;
   completeSale = function(c) {
     baseCompleteSale(c);
-    // baseCompleteSale passe en leaving ; on intercale le paiement visuel puis le repas.
     c.state = 'afterPayment';
     c.waitT = 0.55;
+    clearHeld(c);
     attachHeld(c, null, 'card');
     setBubble(c.visual, '💳');
   };
 
   // ---------------------------------------------------------------------------
-  // 6) Animations supplémentaires : serveur donne, client mange et paie.
+  // 6) Animations : tendre le produit, paiement et repas assis.
   // ---------------------------------------------------------------------------
   gameLoopHooks.push(time => {
     for (const emp of state.staff) {
@@ -541,5 +596,5 @@
     }
   });
 
-  toast('🍞 Service à table, collisions et coin repas activés');
+  toast('🍞 Service visible, collisions et coin repas activés');
 })();
