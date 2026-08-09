@@ -8,7 +8,8 @@ const additions = await Promise.all([
   'scripts/premium-bakery-theme.js',
   'scripts/mobile-fixes.js',
   'scripts/character-overhaul.js',
-  'scripts/service-dining-overhaul.js'
+  'scripts/service-dining-overhaul.js',
+  'scripts/navigation-final-fix.js'
 ].map(path => readFile(path, 'utf8')));
 
 const moduleEnd = html.lastIndexOf('</script>');
