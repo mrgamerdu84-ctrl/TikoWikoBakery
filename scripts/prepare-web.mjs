@@ -15,7 +15,8 @@ const additions = await Promise.all([
   'scripts/shop-customization-v24.js',
   'scripts/storefront-warehouse-street-v25.js',
   'scripts/staff-free-movement-v251.js',
-  'scripts/simulation-core-v26.js'
+  'scripts/simulation-core-v26.js',
+  'scripts/furniture-expansion-v27.js'
 ].map(path => readFile(path, 'utf8')));
 
 const moduleEnd = html.lastIndexOf('</script>');
@@ -26,4 +27,4 @@ await rm('public/assets', { recursive: true, force: true });
 await mkdir('public', { recursive: true });
 await cp('assets', 'public/assets', { recursive: true, force: true });
 await writeFile('index.html', html, 'utf8');
-console.log('Prepared TikoWikoBakery 2.6 with isolated state machines, independent queues and simplified customer flow');
+console.log('Prepared TikoWikoBakery 2.7 with full furniture customization and expandable bakery stations');
