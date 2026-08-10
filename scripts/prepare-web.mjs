@@ -15,7 +15,7 @@ const additions = await Promise.all([
   'scripts/shop-customization-v24.js',
   'scripts/storefront-warehouse-street-v25.js',
   'scripts/staff-free-movement-v251.js',
-  'scripts/gameplay-watchdog-v252.js'
+  'scripts/simulation-core-v26.js'
 ].map(path => readFile(path, 'utf8')));
 
 const moduleEnd = html.lastIndexOf('</script>');
@@ -26,4 +26,4 @@ await rm('public/assets', { recursive: true, force: true });
 await mkdir('public', { recursive: true });
 await cp('assets', 'public/assets', { recursive: true, force: true });
 await writeFile('index.html', html, 'utf8');
-console.log('Prepared TikoWikoBakery 2.5.2 with AI state watchdog, order recovery and readable customer bubbles');
+console.log('Prepared TikoWikoBakery 2.6 with isolated state machines, independent queues and simplified customer flow');
