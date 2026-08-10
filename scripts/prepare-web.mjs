@@ -11,7 +11,8 @@ const additions = await Promise.all([
   'scripts/service-dining-overhaul.js',
   'scripts/navigation-final-fix.js',
   'scripts/visual-bugfix-v211.js',
-  'scripts/layout-editor-service-v23.js'
+  'scripts/layout-editor-service-v23.js',
+  'scripts/shop-customization-v24.js'
 ].map(path => readFile(path, 'utf8')));
 
 const moduleEnd = html.lastIndexOf('</script>');
@@ -22,4 +23,4 @@ await rm('public/assets', { recursive: true, force: true });
 await mkdir('public', { recursive: true });
 await cp('assets', 'public/assets', { recursive: true, force: true });
 await writeFile('index.html', html, 'utf8');
-console.log('Prepared TikoWikoBakery 2.3 with movable furniture, dynamic pathfinding and reliable table service');
+console.log('Prepared TikoWikoBakery 2.4 with open/closed shop, free customization, movable staff and accessible dining');
