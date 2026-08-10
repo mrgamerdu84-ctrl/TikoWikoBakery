@@ -86,7 +86,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TikoWiko-Bakery-v2.5.2-anti-freeze-IA
+          name: TikoWiko-Bakery-v2.6-simulation-refondue
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
